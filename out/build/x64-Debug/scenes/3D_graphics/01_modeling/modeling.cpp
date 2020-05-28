@@ -131,8 +131,8 @@ void scene_model::frame_draw(std::map<std::string,GLuint>& shaders, scene_struct
 
     // Exercise 5, rope
     update_rope(dt);
-    //rope_p[N_rope_node+1] = bird_p;
-    /*for(int i=0;i<=N_rope_node;i++){
+    rope_p[N_rope_node+1] = bird_p;
+    for(int i=0;i<=N_rope_node;i++){
         vec3 &p0 = rope_p[i];
         vec3 &p1 = rope_p[i+1];
 
@@ -142,7 +142,7 @@ void scene_model::frame_draw(std::map<std::string,GLuint>& shaders, scene_struct
 
         rope_node.uniform.transform.translation = p0;
         draw(rope_node, scene.camera, shaders["mesh"]);
-    }*/
+    }
 
     if( gui_scene.wireframe ){ // wireframe if asked from the GUI
         glPolygonOffset( 1.0, 1.0 );
@@ -513,32 +513,32 @@ void scene_model::update_rope(float dt){
     const float K = 10.0f;
     const float mu = 1.0f;
     dt /= 1000;
-    //for(int i=N_rope_node;i>0;i--){
-    //    for(int j=0;j<1000;j++){
-    //        // force (used as acceleration)
-    //        const vec3 f_spring_1 = spring_force(rope_p[i], rope_p[i+1], L0, K);
-    //        const vec3 f_spring_2 = spring_force(rope_p[i], rope_p[i-1], L0, K);
-    //        const vec3 gravity = {0,0,-0.5f};
-    //        const vec3 drag = -mu*rope_v[i];
+    for(int i=N_rope_node;i>0;i--){
+        for(int j=0;j<1000;j++){
+            // force (used as acceleration)
+            const vec3 f_spring_1 = spring_force(rope_p[i], rope_p[i+1], L0, K);
+            const vec3 f_spring_2 = spring_force(rope_p[i], rope_p[i-1], L0, K);
+            const vec3 gravity = {0,0,-0.5f};
+            const vec3 drag = -mu*rope_v[i];
 
-    //        // velocity
-    //        rope_v[i] += (f_spring_1+f_spring_2+gravity+drag)*dt;
+            // velocity
+            rope_v[i] += (f_spring_1+f_spring_2+gravity+drag)*dt;
 
-    //        // position
-    //        rope_p[i] += rope_v[i]*dt;
+            // position
+            rope_p[i] += rope_v[i]*dt;
 
-    //        // stretch limit
-    //        const float L = norm(rope_p[i]-rope_p[i+1]);
-    //        if(L>4*L0){
-    //            rope_p[i] = rope_p[i+1] - normalize(rope_p[i+1]-rope_p[i])*4*L0;
-    //        }
-    //    }
-    //    // collision detection
-    //    const float u = rope_p[i].x/20+0.5;
-    //    const float v = rope_p[i].y/20+0.5; // cf evaluate_terrain
-    //    const float h = evaluate_terrain_z(u, v);
-    //    if(rope_p[i].z < h) rope_p[i].z = h;
-    //}
+            // stretch limit
+            const float L = norm(rope_p[i]-rope_p[i+1]);
+            if(L>4*L0){
+                rope_p[i] = rope_p[i+1] - normalize(rope_p[i+1]-rope_p[i])*4*L0;
+            }
+        }
+        // collision detection
+        const float u = rope_p[i].x/20+0.5;
+        const float v = rope_p[i].y/20+0.5; // cf evaluate_terrain
+        const float h = evaluate_terrain_z(u, v);
+        if(rope_p[i].z < h) rope_p[i].z = h;
+    }
 }
 
 vec3 scene_model::spring_force(const vec3& pi, const vec3& pj, float L0, float K)

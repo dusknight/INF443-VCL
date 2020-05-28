@@ -22,7 +22,7 @@ struct gui_structure
 };
 
 
-GLFWwindow* create_window(const std::string& window_title);
+GLFWwindow* create_window(const std::string& window_title, const int window_width=1280, const int window_height=1000);
 void initialize_interface(gui_structure& gui);
 void load_shaders(std::map<std::string,GLuint>& shaders);
 void setup_scene(scene_structure &scene, gui_structure& gui, const std::map<std::string,GLuint>& shaders);
