@@ -19,6 +19,10 @@ if(WIN32)
     set(GLFW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/lib_windows/glfw3_win/lib/glfw3.lib")
 endif()
 
+find_package(OpenCL REQUIRED)
+include_directories( ${OPENCL_INCLUDE_DIR} )
+
+
 
 include_directories(".")
 include_directories("third_party/eigen/")
@@ -40,5 +44,5 @@ target_link_libraries(pgm glfw dl -static-libstdc++)
 endif()
 
 if(WIN32)
-    target_link_libraries(pgm ${GLFW_LIBRARIES})
+    target_link_libraries(pgm ${GLFW_LIBRARIES} ${OpenCL_LIBRARY})
 endif()

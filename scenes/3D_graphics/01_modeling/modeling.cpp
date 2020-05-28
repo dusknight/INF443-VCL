@@ -1,6 +1,6 @@
 
 #include "modeling.hpp"
-
+#include <ctime>
 
 #ifdef SCENE_3D_GRAPHICS
 
