@@ -20,12 +20,13 @@ if(WIN32)
 endif()
 
 find_package(OpenCL REQUIRED)
-include_directories( ${OPENCL_INCLUDE_DIR} )
+include_directories( ${OpenCL_INCLUDE_DIRS} )
 
-
+find_package(OpenGL REQUIRED)
 
 include_directories(".")
 include_directories("third_party/eigen/")
+include_directories("third_party/glad/include")
 file(
     GLOB_RECURSE
     source_files
@@ -44,5 +45,5 @@ target_link_libraries(pgm glfw dl -static-libstdc++)
 endif()
 
 if(WIN32)
-    target_link_libraries(pgm ${GLFW_LIBRARIES} ${OpenCL_LIBRARY})
+    target_link_libraries(pgm ${GLFW_LIBRARIES} ${OpenCL_LIBRARY} OpenGL::GL)
 endif()

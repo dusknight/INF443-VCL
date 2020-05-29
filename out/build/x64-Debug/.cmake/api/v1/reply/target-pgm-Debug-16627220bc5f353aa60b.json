@@ -29,7 +29,7 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 39,
+				"line" : 40,
 				"parent" : 0
 			},
 			{
@@ -47,6 +47,12 @@
 			{
 				"command" : 2,
 				"file" : 0,
+				"line" : 23,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
 				"line" : 27,
 				"parent" : 0
 			},
@@ -54,6 +60,12 @@
 				"command" : 2,
 				"file" : 0,
 				"line" : 28,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 29,
 				"parent" : 0
 			}
 		]
@@ -82,11 +94,19 @@
 				},
 				{
 					"backtrace" : 4,
-					"path" : "C:/Users/Shikang/source/repos/INF443-VCL/."
+					"path" : "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/include"
 				},
 				{
 					"backtrace" : 5,
+					"path" : "C:/Users/Shikang/source/repos/INF443-VCL/."
+				},
+				{
+					"backtrace" : 6,
 					"path" : "C:/Users/Shikang/source/repos/INF443-VCL/third_party/eigen"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/Users/Shikang/source/repos/INF443-VCL/third_party/glad/include"
 				}
 			],
 			"language" : "CXX",
@@ -186,6 +206,10 @@
 			},
 			{
 				"fragment" : "\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v10.0\\lib\\x64\\OpenCL.lib\"",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "opengl32.lib",
 				"role" : "libraries"
 			},
 			{

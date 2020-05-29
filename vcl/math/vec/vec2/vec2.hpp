@@ -24,7 +24,7 @@ template <> struct buffer_stack<float, 2> {
     ///@}
 
     /** Return 2 */
-    size_t size() const;
+    ::size_t size() const;
 
     /** \name Element access
      * \brief  Allow vec2[0/1], or vec2(0/1), or vec2.at(0/1) */

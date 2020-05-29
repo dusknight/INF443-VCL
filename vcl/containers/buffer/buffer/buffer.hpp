@@ -6,6 +6,7 @@
 
 #include "vcl/base/base.hpp"
 #include <iostream>
+#include <cstddef>
 
 /** ************************************************** **/
 /**           Header                                   **/
@@ -34,16 +35,16 @@ struct buffer
      * \brief  Follows the syntax from std::vector */
     ///@{
     buffer();                             /**< Empty buffer - no elements */
-    buffer(size_t size);                  /**< Buffer with a given size */
+    buffer(::size_t size);                  /**< Buffer with a given size */
     buffer(std::initializer_list<T> arg); /**< Inline initialization using { } */
     buffer(std::vector<T> const& arg);    /**< Direct initialization from std::vector */
     ///@}
 
 
     /** Container size similar to vector.size() */
-    size_t size() const;
+    ::size_t size() const;
     /** Resize container to a new size (similar to vector.resize()) */
-    void resize(size_t size);
+    void resize(::size_t size);
     /** Add an element at the end of the container (similar to vector.push_back()) */
     void push_back(T const& value);
     /** Remove all elements of the container, new size is 0 (similar to vector.clear()) */
@@ -55,12 +56,12 @@ struct buffer
      * \brief  Allows buffer[i], buffer(i), and buffer.at(i)
      * Bound checking is performed unless VCL_NO_DEBUG is defined. */
     ///@{
-    T const& operator[](size_t index) const;
-    T & operator[](size_t index);
-    T const& operator()(size_t index) const;
-    T & operator()(size_t index);
-    T const& at(size_t index) const; /**< Internal call to std::vector.at */
-    T & at(size_t index);            /**< Internal call to std::vector.at */
+    T const& operator[](::size_t index) const;
+    T & operator[](::size_t index);
+    T const& operator()(::size_t index) const;
+    T & operator()(::size_t index);
+    T const& at(::size_t index) const; /**< Internal call to std::vector.at */
+    T & at(::size_t index);            /**< Internal call to std::vector.at */
     ///@}
 
     /** \name Iterators
@@ -149,7 +150,7 @@ buffer<T>::buffer()
 {}
 
 template <typename T>
-buffer<T>::buffer(size_t size)
+buffer<T>::buffer(::size_t size)
     :data(size)
 {}
 
@@ -164,13 +165,13 @@ buffer<T>::buffer(const std::vector<T>& arg)
 {}
 
 template <typename T>
-size_t buffer<T>::size() const
+::size_t buffer<T>::size() const
 {
     return data.size();
 }
 
 template <typename T>
-void buffer<T>::resize(size_t size)
+void buffer<T>::resize(::size_t size)
 {
     data.resize(size);
 }
@@ -188,38 +189,38 @@ void buffer<T>::clear()
 }
 
 template <typename T>
-T const& buffer<T>::operator[](size_t index) const
+T const& buffer<T>::operator[](::size_t index) const
 {
     assert_vcl(index<data.size(), "index="+str(index));
     return data[index];
 }
 template <typename T>
-T & buffer<T>::operator[](size_t index)
+T & buffer<T>::operator[](::size_t index)
 {
     assert_vcl(index<data.size(), "index="+str(index));
     return data[index];
 }
 
 template <typename T>
-T const& buffer<T>::operator()(size_t index) const
+T const& buffer<T>::operator()(::size_t index) const
 {
     return (*this)[index];
 }
 
 template <typename T>
-T & buffer<T>::operator()(size_t index)
+T & buffer<T>::operator()(::size_t index)
 {
     return (*this)[index];
 }
 
 template <typename T>
-T const& buffer<T>::at(size_t index) const
+T const& buffer<T>::at(::size_t index) const
 {
     return data.at(index);
 }
 
 template <typename T>
-T & buffer<T>::at(size_t index)
+T & buffer<T>::at(::size_t index)
 {
     return data.at(index);
 }
@@ -228,7 +229,7 @@ template <typename T>
 void buffer<T>::fill(T const& value)
 {
     size_t const N = size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         data[k] = value;
 }
 
@@ -285,7 +286,7 @@ template <typename T> T average(buffer<T> const& a)
     assert_vcl_no_msg(N>0);
 
     T value; // assume value start at zero
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         value += a[k];
     value /= float(N);
 
@@ -299,7 +300,7 @@ buffer<T>& operator+=(buffer<T>& a, buffer<T> const& b)
     assert_vcl(a.size()==b.size(), "Size do not agree");
 
     const size_t N = a.size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         a[k] += b[k];
     return a;
 }
@@ -309,7 +310,7 @@ buffer<T>& operator+=(buffer<T>& a, T const& b)
 {
     assert_vcl(a.size()>0, "Size must be >0");
     const size_t N = a.size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         a[k] += b;
     return a;
 }
@@ -335,7 +336,7 @@ buffer<T>  operator+(T const& a, buffer<T> const& b)
 {
     size_t const N = b.size();
     buffer<T> res(N);
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         res[k] = a+b[k];
     return res;
 }
@@ -344,7 +345,7 @@ template <typename T> buffer<T>  operator-(buffer<T> const& a)
 {
     size_t const N = a.size();
     buffer<T> b(N);
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         b[k] = -a[k];
     return b;
 }
@@ -356,7 +357,7 @@ template <typename T> buffer<T>& operator-=(buffer<T>& a, buffer<T> const& b)
     assert_vcl(a.size()==b.size(), "Size do not agree");
 
     const size_t N = a.size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         a[k] -= b[k];
     return a;
 }
@@ -364,7 +365,7 @@ template <typename T> buffer<T>& operator-=(buffer<T>& a, T const& b)
 {
     assert_vcl(a.size()>0, "Size must be >0");
     const size_t N = a.size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         a[k] -= b;
     return a;
 }
@@ -384,7 +385,7 @@ template <typename T> buffer<T>  operator-(T const& a, buffer<T> const& b)
 {
     size_t const N = b.size();
     buffer<T> res(N);
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         res[k] = a-b[k];
     return res;
 }
@@ -396,7 +397,7 @@ template <typename T> buffer<T>& operator*=(buffer<T>& a, buffer<T> const& b)
     assert_vcl(a.size()==b.size(), "Size do not agree");
 
     const size_t N = a.size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         a[k] *= b[k];
     return a;
 }
@@ -413,7 +414,7 @@ template <typename T> buffer<T>  operator*(buffer<T> const& a, buffer<T> const& 
 template <typename T> buffer<T>& operator*=(buffer<T>& a, float b)
 {
     size_t const N = a.size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         a[k] *= b;
     return a;
 }
@@ -421,7 +422,7 @@ template <typename T> buffer<T>  operator*(buffer<T> const& a, float b)
 {
     size_t const N = a.size();
     buffer<T> res(N);
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         res[k] = a[k]*b;
     return res;
 }
@@ -429,7 +430,7 @@ template <typename T> buffer<T>  operator*(float a, buffer<T> const& b)
 {
     size_t const N = b.size();
     buffer<T> res(N);
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         res[k] = a*b[k];
     return res;
 }
@@ -440,7 +441,7 @@ template <typename T> buffer<T>& operator/=(buffer<T>& a, buffer<T> const& b)
     assert_vcl(a.size()==b.size(), "Size do not agree");
 
     const size_t N = a.size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         a[k] /= b[k];
     return a;
 }
@@ -448,7 +449,7 @@ template <typename T> buffer<T>& operator/=(buffer<T>& a, float b)
 {
     assert_vcl(a.size()>0, "Size must be >0");
     const size_t N = a.size();
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         a[k] /= b;
     return a;
 }
@@ -474,7 +475,7 @@ template <typename T1, typename T2> bool is_equal(buffer<T1> const& a, buffer<T2
         return false;
 
     using vcl::is_equal;
-    for(size_t k=0; k<N; ++k)
+    for(::size_t k=0; k<N; ++k)
         if( is_equal(a[k],b[k])==false )
             return false;
     return true;

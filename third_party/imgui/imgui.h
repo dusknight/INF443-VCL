@@ -53,7 +53,7 @@
 #define IM_FMTLIST(FMT)
 #endif
 #define IM_ARRAYSIZE(_ARR)          ((int)(sizeof(_ARR)/sizeof(*_ARR)))         // Size of a static C-style array. Don't use on pointers!
-#define IM_OFFSETOF(_TYPE,_MEMBER)  ((size_t)&(((_TYPE*)0)->_MEMBER))           // Offset of _MEMBER within _TYPE. Standardized as offsetof() in modern C++.
+#define IM_OFFSETOF(_TYPE,_MEMBER)  ((::size_t)&(((_TYPE*)0)->_MEMBER))           // Offset of _MEMBER within _TYPE. Standardized as offsetof() in modern C++.
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -140,7 +140,7 @@ struct ImVec2
     float     x, y;
     ImVec2()  { x = y = 0.0f; }
     ImVec2(float _x, float _y) { x = _x; y = _y; }
-    float operator[] (size_t i) const { IM_ASSERT(i <= 1); return (&x)[i]; }    // We very rarely use this [] operator, the assert overhead is fine.
+    float operator[] (::size_t i) const { IM_ASSERT(i <= 1); return (&x)[i]; }    // We very rarely use this [] operator, the assert overhead is fine.
 #ifdef IM_VEC2_CLASS_EXTRA
     IM_VEC2_CLASS_EXTRA     // Define additional constructors and implicit cast operators in imconfig.h to convert back and forth between your math types and ImVec2.
 #endif
@@ -168,7 +168,7 @@ namespace ImGui
     IMGUI_API void          DestroyContext(ImGuiContext* ctx = NULL);   // NULL = destroy current context
     IMGUI_API ImGuiContext* GetCurrentContext();
     IMGUI_API void          SetCurrentContext(ImGuiContext* ctx);
-    IMGUI_API bool          DebugCheckVersionAndDataLayout(const char* version_str, size_t sz_io, size_t sz_style, size_t sz_vec2, size_t sz_vec4, size_t sz_drawvert);
+    IMGUI_API bool          DebugCheckVersionAndDataLayout(const char* version_str, ::size_t sz_io, ::size_t sz_style, ::size_t sz_vec2, ::size_t sz_vec4, ::size_t sz_drawvert);
 
     // Main
     IMGUI_API ImGuiIO&      GetIO();                                    // access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags)
@@ -397,8 +397,8 @@ namespace ImGui
 
     // Widgets: Input with Keyboard
     // If you want to use InputText() with a dynamic string type such as std::string or your own, see misc/cpp/imgui_stdlib.h
-    IMGUI_API bool          InputText(const char* label, char* buf, size_t buf_size, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
-    IMGUI_API bool          InputTextMultiline(const char* label, char* buf, size_t buf_size, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
+    IMGUI_API bool          InputText(const char* label, char* buf, ::size_t buf_size, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
+    IMGUI_API bool          InputTextMultiline(const char* label, char* buf, ::size_t buf_size, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
     IMGUI_API bool          InputFloat(const char* label, float* v, float step = 0.0f, float step_fast = 0.0f, const char* format = "%.3f", ImGuiInputTextFlags extra_flags = 0);
     IMGUI_API bool          InputFloat2(const char* label, float v[2], const char* format = "%.3f", ImGuiInputTextFlags extra_flags = 0);
     IMGUI_API bool          InputFloat3(const char* label, float v[3], const char* format = "%.3f", ImGuiInputTextFlags extra_flags = 0);
@@ -514,7 +514,7 @@ namespace ImGui
     // Drag and Drop
     // [BETA API] Missing Demo code. API may evolve.
     IMGUI_API bool          BeginDragDropSource(ImGuiDragDropFlags flags = 0);                                      // call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
-    IMGUI_API bool          SetDragDropPayload(const char* type, const void* data, size_t size, ImGuiCond cond = 0);// type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types. Data is copied and held by imgui.
+    IMGUI_API bool          SetDragDropPayload(const char* type, const void* data, ::size_t size, ImGuiCond cond = 0);// type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types. Data is copied and held by imgui.
     IMGUI_API void          EndDragDropSource();                                                                    // only call EndDragDropSource() if BeginDragDropSource() returns true!
     IMGUI_API bool                  BeginDragDropTarget();                                                          // call after submitting an item that may receive a payload. If this returns true, you can call AcceptDragDropPayload() + EndDragDropTarget()
     IMGUI_API const ImGuiPayload*   AcceptDragDropPayload(const char* type, ImGuiDragDropFlags flags = 0);          // accept contents of a given type. If ImGuiDragDropFlags_AcceptBeforeDelivery is set you can peek into the payload before the mouse button is released.
@@ -600,15 +600,15 @@ namespace ImGui
     // The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
     // Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually.
     IMGUI_API void          LoadIniSettingsFromDisk(const char* ini_filename);                  // call after CreateContext() and before the first call to NewFrame(). NewFrame() automatically calls LoadIniSettingsFromDisk(io.IniFilename).
-    IMGUI_API void          LoadIniSettingsFromMemory(const char* ini_data, size_t ini_size=0); // call after CreateContext() and before the first call to NewFrame() to provide .ini data from your own data source.
+    IMGUI_API void          LoadIniSettingsFromMemory(const char* ini_data, ::size_t ini_size=0); // call after CreateContext() and before the first call to NewFrame() to provide .ini data from your own data source.
     IMGUI_API void          SaveIniSettingsToDisk(const char* ini_filename);
-    IMGUI_API const char*   SaveIniSettingsToMemory(size_t* out_ini_size = NULL);               // return a zero-terminated string with the .ini data which you can save by your own mean. call when io.WantSaveIniSettings is set, then save data by your own mean and clear io.WantSaveIniSettings.
+    IMGUI_API const char*   SaveIniSettingsToMemory(::size_t* out_ini_size = NULL);               // return a zero-terminated string with the .ini data which you can save by your own mean. call when io.WantSaveIniSettings is set, then save data by your own mean and clear io.WantSaveIniSettings.
 
     // Memory Utilities
     // All those functions are not reliant on the current context.
     // If you reload the contents of imgui.cpp at runtime, you may need to call SetCurrentContext() + SetAllocatorFunctions() again.
-    IMGUI_API void          SetAllocatorFunctions(void* (*alloc_func)(size_t sz, void* user_data), void(*free_func)(void* ptr, void* user_data), void* user_data = NULL);
-    IMGUI_API void*         MemAlloc(size_t size);
+    IMGUI_API void          SetAllocatorFunctions(void* (*alloc_func)(::size_t sz, void* user_data), void(*free_func)(void* ptr, void* user_data), void* user_data = NULL);
+    IMGUI_API void*         MemAlloc(::size_t size);
     IMGUI_API void          MemFree(void* ptr);
 
 } // namespace ImGui
@@ -1273,7 +1273,7 @@ public:
     inline ImVector()           { Size = Capacity = 0; Data = NULL; }
     inline ~ImVector()          { if (Data) ImGui::MemFree(Data); }
     inline ImVector(const ImVector<T>& src)                     { Size = Capacity = 0; Data = NULL; operator=(src); }
-    inline ImVector<T>& operator=(const ImVector<T>& src)       { clear(); resize(src.Size); memcpy(Data, src.Data, (size_t)Size * sizeof(value_type)); return *this; }
+    inline ImVector<T>& operator=(const ImVector<T>& src)       { clear(); resize(src.Size); memcpy(Data, src.Data, (::size_t)Size * sizeof(value_type)); return *this; }
 
     inline bool                 empty() const                   { return Size == 0; }
     inline int                  size() const                    { return Size; }
@@ -1299,10 +1299,10 @@ public:
     {
         if (new_capacity <= Capacity)
             return;
-        value_type* new_data = (value_type*)ImGui::MemAlloc((size_t)new_capacity * sizeof(value_type));
+        value_type* new_data = (value_type*)ImGui::MemAlloc((::size_t)new_capacity * sizeof(value_type));
         if (Data)
         {
-            memcpy(new_data, Data, (size_t)Size * sizeof(value_type));
+            memcpy(new_data, Data, (::size_t)Size * sizeof(value_type));
             ImGui::MemFree(Data);
         }
         Data = new_data;
@@ -1313,10 +1313,10 @@ public:
     inline void         push_back(const value_type& v)                  { if (Size == Capacity) reserve(_grow_capacity(Size + 1)); memcpy(&Data[Size], &v, sizeof(v)); Size++; }
     inline void         pop_back()                                      { IM_ASSERT(Size > 0); Size--; }
     inline void         push_front(const value_type& v)                 { if (Size == 0) push_back(v); else insert(Data, v); }
-    inline iterator     erase(const_iterator it)                        { IM_ASSERT(it >= Data && it < Data+Size); const ptrdiff_t off = it - Data; memmove(Data + off, Data + off + 1, ((size_t)Size - (size_t)off - 1) * sizeof(value_type)); Size--; return Data + off; }
-    inline iterator     erase(const_iterator it, const_iterator it_last){ IM_ASSERT(it >= Data && it < Data+Size && it_last > it && it_last <= Data+Size); const ptrdiff_t count = it_last - it; const ptrdiff_t off = it - Data; memmove(Data + off, Data + off + count, ((size_t)Size - (size_t)off - count) * sizeof(value_type)); Size -= (int)count; return Data + off; }
+    inline iterator     erase(const_iterator it)                        { IM_ASSERT(it >= Data && it < Data+Size); const ptrdiff_t off = it - Data; memmove(Data + off, Data + off + 1, ((::size_t)Size - (::size_t)off - 1) * sizeof(value_type)); Size--; return Data + off; }
+    inline iterator     erase(const_iterator it, const_iterator it_last){ IM_ASSERT(it >= Data && it < Data+Size && it_last > it && it_last <= Data+Size); const ptrdiff_t count = it_last - it; const ptrdiff_t off = it - Data; memmove(Data + off, Data + off + count, ((::size_t)Size - (::size_t)off - count) * sizeof(value_type)); Size -= (int)count; return Data + off; }
     inline iterator     erase_unsorted(const_iterator it)               { IM_ASSERT(it >= Data && it < Data+Size);  const ptrdiff_t off = it - Data; if (it < Data+Size-1) memcpy(Data + off, Data + Size - 1, sizeof(value_type)); Size--; return Data + off; }
-    inline iterator     insert(const_iterator it, const value_type& v)  { IM_ASSERT(it >= Data && it <= Data+Size); const ptrdiff_t off = it - Data; if (Size == Capacity) reserve(_grow_capacity(Size + 1)); if (off < (int)Size) memmove(Data + off + 1, Data + off, ((size_t)Size - (size_t)off) * sizeof(value_type)); memcpy(&Data[off], &v, sizeof(v)); Size++; return Data + off; }
+    inline iterator     insert(const_iterator it, const value_type& v)  { IM_ASSERT(it >= Data && it <= Data+Size); const ptrdiff_t off = it - Data; if (Size == Capacity) reserve(_grow_capacity(Size + 1)); if (off < (int)Size) memmove(Data + off + 1, Data + off, ((::size_t)Size - (::size_t)off) * sizeof(value_type)); memcpy(&Data[off], &v, sizeof(v)); Size++; return Data + off; }
     inline bool         contains(const value_type& v) const             { const T* data = Data;  const T* data_end = Data + Size; while (data < data_end) if (*data++ == v) return true; return false; }
     inline int          index_from_pointer(const_iterator it) const     { IM_ASSERT(it >= Data && it <= Data+Size); const ptrdiff_t off = it - Data; return (int)off; }
 };
@@ -1325,7 +1325,7 @@ public:
 // We call C++ constructor on own allocated memory via the placement "new(ptr) Type()" syntax.
 // Defining a custom placement new() with a dummy parameter allows us to bypass including <new> which on some platforms complains when user has disabled exceptions.
 struct ImNewDummy {};
-inline void* operator new(size_t, ImNewDummy, void* ptr) { return ptr; }
+inline void* operator new(::size_t, ImNewDummy, void* ptr) { return ptr; }
 inline void  operator delete(void*, ImNewDummy, void*)   {} // This is only required so we can use the symetrical new()
 #define IM_PLACEMENT_NEW(_PTR)              new(ImNewDummy(), _PTR)
 #define IM_NEW(_TYPE)                       new(ImNewDummy(), ImGui::MemAlloc(sizeof(_TYPE))) _TYPE
