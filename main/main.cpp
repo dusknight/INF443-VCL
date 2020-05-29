@@ -414,6 +414,21 @@ void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int acti
 
 // test
 
+void setup_dev(cl_context_properties* properties, cl_device_id device_id, cl_platform_id platform_id) {
+    // Load extension
+    clGetGLContextInfoKHR_fn clGetGLContextInfoKHR = NULL;
+
+#if CL_TARGET_OPENCL_VERSION > 110
+    clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddressForPlatform(platform_id, "clGetGLContextInfoKHR");
+#else
+    clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddress("clGetGLContextInfoKHR");
+#endif
+    if (!clGetGLContextInfoKHR)
+        throw std::runtime_error("\"clGetGLContextInfoKHR\" Function failed to load.");
+
+    // err = clGetGLContextInfoKHR(properties, CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR, sizeof(cl_device_id), &device_id, &num_devices);
+}
+
 int test_cl()
 {
     // Find all available OpenCL platforms (e.g. AMD, Nvidia, Intel)
@@ -470,7 +485,16 @@ int test_cl()
 
     // Create an OpenCL context on that device.
     // the context manages all the OpenCL resources 
-    Context context = Context(device);
+    static cl_context_properties properties[] =
+    {
+        CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
+        CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
+        CL_CONTEXT_PLATFORM, (cl_context_properties)platform(),
+        0
+    };
+
+    setup_dev(properties, device(), platform());
+    Context context = Context(device, properties);
 
     ///////////////////
     // OPENCL KERNEL //
@@ -548,14 +572,8 @@ int test_cl()
 
 int main()
 {
-    //
-    test_cl();
-    return 0;
-	// initialise OpenCL
-	initOpenCL();
 
-	// create vertex buffer object
-	createVBO(&vbo);
+
 
 
     // ************************************** //
@@ -586,6 +604,14 @@ int main()
 
 	// initialise scene
 	initScene(cpu_spheres);
+
+    //
+    // test_cl();
+    // return 0;
+    // initialise OpenCL
+    initOpenCL();
+    // create vertex buffer object
+    createVBO(&vbo);
 
 	cl_spheres = Buffer(context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
 	queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
@@ -619,7 +645,7 @@ int main()
         gui_start_basic_structure(gui,scene);
 
         // Perform computation and draw calls for each iteration loop
-        scene_current.frame_draw(shaders, scene, gui); opengl_debug();
+        // scene_current.frame_draw(shaders, scene, gui); opengl_debug();
 
 
         // Render GUI and update window

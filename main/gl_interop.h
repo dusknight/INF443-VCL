@@ -37,7 +37,7 @@ void createVBO(GLuint* vbo)
 {
 	int err;
 	//create vertex buffer object
-	err = glGetError();
+	// err = glGetError();
 	glGenBuffers(1, vbo);
 	err = glGetError();
 	glBindBuffer(GL_ARRAY_BUFFER, *vbo);
