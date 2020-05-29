@@ -599,19 +599,21 @@ int main()
     //std::cout<<"\t [OK] Data setup"<<std::endl;
     //opengl_debug();
 
-	//make sure OpenGL is finished before we proceed
-	glFinish();
-
-	// initialise scene
-	initScene(cpu_spheres);
-
-    //
+        //
     // test_cl();
     // return 0;
     // initialise OpenCL
     initOpenCL();
     // create vertex buffer object
     createVBO(&vbo);
+
+	//make sure OpenGL is finished before we proceed
+	glFinish();
+
+	// initialise scene
+	initScene(cpu_spheres);
+
+
 
 	cl_spheres = Buffer(context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
 	queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
