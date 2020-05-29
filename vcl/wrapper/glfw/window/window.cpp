@@ -50,16 +50,29 @@ void glfw_init()
 
 }
 
-GLFWwindow* glfw_create_window(int width, int height, const std::string& title, int opengl_version_major, int opengl_version_minor, GLFWmonitor* monitor, GLFWwindow* share)
+
+GLFWwindow* glfw_create_window(int width, int height, const std::string& title, int opengl_version_major, int opengl_version_minor, GLFWmonitor* monitor, GLFWwindow* share, const bool ray_trace_init)
 {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, opengl_version_major);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, opengl_version_minor);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);  
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 8);
-    glfwWindowHint(GLFW_FLOATING, 0);
+
+
+    if (ray_trace_init) {
+        glfwWindowHint(GLFW_ALPHA_BITS, 8);
+        glfwWindowHint(GLFW_STENCIL_BITS, 8);
+        glfwWindowHint(GLFW_DEPTH_BITS, 24);
+
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE); // not resizable
+    }
+    else {
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);  // debug mode
+        glfwWindowHint(GLFW_SAMPLES, 8);
+        glfwWindowHint(GLFW_FLOATING, 0);
+    }
 
 
     GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), monitor, share);
@@ -71,6 +84,11 @@ GLFWwindow* glfw_create_window(int width, int height, const std::string& title, 
     }
 
     glfwMakeContextCurrent(window);
+
+    if (ray_trace_init) {
+        // glfwSetWindowUserPointer(window, this);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
 
     return window;
 

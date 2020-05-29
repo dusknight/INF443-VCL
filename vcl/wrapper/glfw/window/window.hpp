@@ -15,7 +15,9 @@ namespace vcl
  * Exit program if fails */
 void glfw_init();
 
-GLFWwindow* glfw_create_window(int width, int height, const std::string& title, int opengl_version_major, int opengl_version_minor, GLFWmonitor* monitor=nullptr, GLFWwindow* share=nullptr);
+GLFWwindow* glfw_create_window(int width, int height, const std::string& title, int opengl_version_major, int opengl_version_minor, 
+    GLFWmonitor* monitor=nullptr, GLFWwindow* share=nullptr, 
+    const bool ray_trace_init=false);
 
 void glad_init();
 

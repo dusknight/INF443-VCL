@@ -48,14 +48,14 @@ int main()
     // ************************************** //
 
     // Initialize external libraries and window
-    initialize_interface(gui);
+    initialize_interface(gui, 1280, 1280, true);
 
     // Set GLFW events listener
     glfwSetCursorPosCallback(gui.window, cursor_position_callback );
     glfwSetMouseButtonCallback(gui.window, mouse_click_callback);
     glfwSetScrollCallback(gui.window, mouse_scroll_callback);
     glfwSetKeyCallback(gui.window, keyboard_input_callback);
-    glfwSetWindowSizeCallback(gui.window, window_size_callback);
+    // glfwSetWindowSizeCallback(gui.window, window_size_callback);
 
     load_shaders(shaders);
     setup_scene(scene, gui, shaders);

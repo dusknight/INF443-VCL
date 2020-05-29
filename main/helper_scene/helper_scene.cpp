@@ -6,16 +6,16 @@ using namespace vcl;
 
 
 GLFWwindow* create_window(const std::string& window_title,
-	const int window_width, const int window_height)
+	const int window_width, const int window_height, const bool ray_trace_init)
 {
     const int opengl_version_major = 3;
     const int opengl_version_minor = 3;
 
-    GLFWwindow* window = vcl::glfw_create_window(window_width, window_height, window_title, opengl_version_major, opengl_version_minor);
+    GLFWwindow* window = vcl::glfw_create_window(window_width, window_height, window_title, opengl_version_major, opengl_version_minor, nullptr, nullptr, ray_trace_init);
     return window;
 }
 
-void initialize_interface(gui_structure& gui)
+void initialize_interface(gui_structure& gui, const int width, const int height, const bool ray_trace_init)
 {
     std::cout<<"*** Init GLFW ***"<<std::endl;
     vcl::glfw_init();
@@ -24,7 +24,7 @@ void initialize_interface(gui_structure& gui)
 
     std::cout<<"*** Create window ***"<<std::endl;
     gui.window_title = "OpenGL Window";
-    gui.window = create_window(gui.window_title);
+    gui.window = create_window(gui.window_title, width, height, ray_trace_init);
     std::cout<<"\t [OK] Window Created"<<std::endl;
 
     std::cout<<"*** Init GLAD ***"<<std::endl;
@@ -79,8 +79,7 @@ void setup_scene(scene_structure &scene, gui_structure& gui, const std::map<std:
 void clear_screen()
 {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 }
 
