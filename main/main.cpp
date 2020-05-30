@@ -201,7 +201,7 @@ void initOpenCL()
 
 	// Convert the OpenCL source code to a string// Convert the OpenCL source code to a string
 	string source;
-	ifstream file("../../../cl_kernels/test.cl");
+	ifstream file("../../../cl_kernels/simple.cl");
 	if (!file) {
 		cout << "\nNo OpenCL file found!" << endl << "Exiting..." << endl;
 		system("PAUSE");
@@ -323,16 +323,26 @@ void runKernel() {
 	//Make sure OpenGL is done using the VBOs
 	glFinish();
 
+    cl_int err_code;
 	//this passes in the vector of VBO buffer objects 
-	queue.enqueueAcquireGLObjects(&cl_vbos);
+	err_code = queue.enqueueAcquireGLObjects(&cl_vbos);
+    if (err_code != CL_SUCCESS) {
+        std::cerr << "ERROR in locking texture : " << err_code << std::endl;
+    }
 	queue.finish();
 
 	// launch the kernel
-	queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size); // local_work_size
+	err_code = queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size); // local_work_size
+    if (err_code != CL_SUCCESS) {
+        std::cerr << "ERROR in running queue :" <<err_code<< std::endl;
+    }
 	queue.finish();
 
 	//Release the VBOs so OpenGL can play with them
-	queue.enqueueReleaseGLObjects(&cl_vbos);
+	err_code = queue.enqueueReleaseGLObjects(&cl_vbos);
+    if (err_code != CL_SUCCESS) {
+        std::cerr << "ERROR in unlocking texture :" << err_code << std::endl;
+    }
 	queue.finish();
 }
 
@@ -641,18 +651,40 @@ int main()
         // Clear all color and zbuffer information before drawing on the screen
         clear_screen();opengl_debug();
         // Set a white image texture by default
-        glBindTexture(GL_TEXTURE_2D,scene.texture_white);
+        // glBindTexture(GL_TEXTURE_2D,scene.texture_white);
 
         // Create the basic gui structure with ImGui
         gui_start_basic_structure(gui,scene);
 
         // Perform computation and draw calls for each iteration loop
         // scene_current.frame_draw(shaders, scene, gui); opengl_debug();
+        // render(gui.window);
+        // framenumber++;
 
+        cpu_spheres[6].position.s[1] += 0.01;
+        queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
+        kernel.setArg(0, cl_spheres);
+        kernel.setArg(5, WangHash(framenumber));
+        runKernel();
 
+        // glDrawElements(GL_TRIANGLES, sizeof)
+        // glEnable(GL_VERTEX_ARRAY); opengl_debug();
+        glEnableVertexAttribArray(0); opengl_debug();
+        glBindBuffer(GL_ARRAY_BUFFER, vbo); opengl_debug();
+        glVertexAttribPointer(vbo, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0); opengl_debug();
+        // glVertexPointer(3, GL_FLOAT, sizeof(cl_float3), 0); opengl_debug();
+        // glDrawBuffer(9, cl_vbos.data()); 
+        // glColorPointer(3, GL_FLOAT_VEC3,  0, 0); opengl_debug();
+        glDrawArrays(GL_POINTS, 0, window_width * window_height);
+        // glDrawElements(GL_TRIANGLES, window_width * window_height, GL_UNSIGNED_INT, 0);
+        opengl_debug();
+
+        glfwSwapBuffers(gui.window);
+        // drawGL(gui.window);
+        opengl_debug();
         // Render GUI and update window
         ImGui::End();
-        scene.camera_control.update = !(ImGui::IsAnyWindowFocused());
+        // scene.camera_control.update = !(ImGui::IsAnyWindowFocused());
         vcl::imgui_render_frame(gui.window);
 
         update_fps_title(gui.window, gui.window_title, fps_counter);
