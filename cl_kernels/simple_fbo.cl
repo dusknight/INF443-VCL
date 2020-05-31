@@ -261,9 +261,10 @@ __kernel void render_kernel(
 	colorf4.y = finalcolor.y;
 	colorf4.z = finalcolor.z;
 
-	/* colorf4 = (float4)(0.5f, 0.5f, 0.5f, 1.0f); */
+	
 	if (reset == 1)
 	{
+		if(x_coord < 100 || x_coord > 500) colorf4 = (float4)(0.5f, 0.5f, 0.5f, 1.0f);
 		write_imagef(outputImage, pixel, colorf4);
 	}
 	else
