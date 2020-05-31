@@ -261,6 +261,7 @@ __kernel void render_kernel(
 	colorf4.y = finalcolor.y;
 	colorf4.z = finalcolor.z;
 
+	/* colorf4 = (float4)(0.5f, 0.5f, 0.5f, 1.0f); */
 	if (reset == 1)
 	{
 		write_imagef(outputImage, pixel, colorf4);
@@ -273,6 +274,7 @@ __kernel void render_kernel(
 		colorf4 += (prev_color * num_passes);
 		colorf4 /= (num_passes + 1);
 		colorf4.w = num_passes + 1;
+
 		write_imagef(outputImage, pixel, colorf4);
 	}
 }

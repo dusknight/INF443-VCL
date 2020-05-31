@@ -303,15 +303,15 @@ void runKernel() {
         global_work_size = (global_work_size / local_work_size + 1) * local_work_size;
 
     // setup RBO for reading
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_ID);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_ID);  // FBO for read back
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  // default FBO for rendering
     glDrawBuffer(GL_BACK);
 
     //Make sure OpenGL is done using the VBOs
     glFinish();
 
     cl_int err_code;
-    //this passes in the vector of VBO buffer objects 
+    //this passes in the vector of VBO buffer objects => RBO objects
     err_code= queue.enqueueAcquireGLObjects(&image_buffers);
     if (err_code != CL_SUCCESS) {
         std::cerr << "ERROR in locking texture : " << err_code << std::endl;
@@ -333,8 +333,10 @@ void runKernel() {
     }
     queue.finish();
     
-    glReadBuffer(GL_COLOR_ATTACHMENT1);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_ID);
+    // glReadBuffer(GL_COLOR_ATTACHMENT0); // TODO???
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_ID);  // for rendering: FBO
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  // for rendering: FBO
+    // glDrawBuffer(GL_COLOR_ATTACHMENT0);  // TODO ??????
     // clear previous frame
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -343,8 +345,8 @@ void runKernel() {
         0, 0, window_width, window_height,
         GL_COLOR_BUFFER_BIT,
         GL_LINEAR); opengl_debug();
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();
-    glDrawBuffer(GL_BACK); opengl_debug();
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();  // back to default
+    glDrawBuffer(GL_BACK); opengl_debug();  // draw to back buffer, waiting for swap
     
 }
 
@@ -361,14 +363,16 @@ void render() {
 }
 
 bool setupBufferFBO() {
+    // clear previous buffers
     glDeleteRenderbuffers(2, rbo_IDs);
     glDeleteFramebuffers(1, &fbo_ID);
 
+    // create FBO, bind
     glGenFramebuffers(1, &fbo_ID);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_ID);
 
+    // add Renderbufer to FBO
     glGenRenderbuffers(2, rbo_IDs);
-
     glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[0]);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, window_width, window_height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo_IDs[0]);
@@ -389,6 +393,8 @@ bool setupBufferFBO() {
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         std::cerr << "Framebuffer not complete, code: " << status << endl;
     }
+
+    // clear buffer
     glClearColor(0.f, 0.f, 0.f, 1.0f);
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -396,12 +402,13 @@ bool setupBufferFBO() {
     glDrawBuffer(GL_COLOR_ATTACHMENT1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glDrawBuffer(GL_COLOR_ATTACHMENT2);
-    glClear(GL_COLOR_BUFFER_BIT);
+    //glDrawBuffer(GL_COLOR_ATTACHMENT2);
+    //glClear(GL_COLOR_BUFFER_BIT);
 
-    glDrawBuffer(GL_COLOR_ATTACHMENT3);
-    glClear(GL_COLOR_BUFFER_BIT);
+    //glDrawBuffer(GL_COLOR_ATTACHMENT3);
+    //glClear(GL_COLOR_BUFFER_BIT);
 
+    // back to default
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     return true;
@@ -454,18 +461,6 @@ void initCamera()
 }
 
 
-void main_old(int argc, char** argv) {
-
-	
-
-	// start rendering continuously
-	// glutMainLoop();
-
-	// release memory
-	cleanUp();
-
-	system("PAUSE");
-}
 // ************************************** //
 // Global data declaration
 // ************************************** //
@@ -658,16 +653,13 @@ int test_cl()
 int main()
 {
 
-
-
-
     // ************************************** //
     // Initialization and data setup
     // ************************************** //
 
     // Initialize external libraries and window
     initialize_interface(gui, window_width, window_height, true);
-
+    // glfwSwapInterval(0);
     // Set GLFW events listener
     glfwSetCursorPosCallback(gui.window, cursor_position_callback );
     glfwSetMouseButtonCallback(gui.window, mouse_click_callback);
@@ -684,35 +676,30 @@ int main()
     //std::cout<<"\t [OK] Data setup"<<std::endl;
     //opengl_debug();
 
-        //
+    //////////////// OPENCL  ////////////////////////////
     // test_cl();
-    // return 0;
+    
     // initialise OpenCL
     initOpenCL();
-    // create vertex buffer object
-    // createVBO(&vbo);
-    cl_int err;
+
+    // create FBO
     setupBufferFBO();  // first GL
+    // createVBO(&vbo);
+
+    cl_int err;
     for (int i = 0; i < 2; i++) {  // Then CL
         image_buffers.push_back(cl::BufferRenderGL(context, CL_MEM_READ_WRITE, rbo_IDs[i], &err));
         if (err != CL_SUCCESS) std::cerr << "ERROR allocating RBO : " << err << std::endl;
     }
 
-	//make sure OpenGL is finished before we proceed
-	glFinish();
+	////make sure OpenGL is finished before we proceed
+	//glFinish();
 
 	// initialise scene
 	initScene(cpu_spheres);
-
+    interactiveCamera = new InteractiveCamera;
 	cl_spheres = Buffer(context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
 	queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
-
-	// create OpenCL buffer from OpenGL vertex buffer object
-	// cl_vbo = BufferGL(context, CL_MEM_WRITE_ONLY, vbo);
-	// cl_vbos.push_back(cl_vbo);
-
-    // reserve memory buffer on OpenCL device to hold image buffer for accumulated samples
-    cl_accumbuffer = Buffer(context, CL_MEM_WRITE_ONLY, window_width * window_height * sizeof(cl_float3));
 
 	// intitialise the kernel
 	initCLKernel();
@@ -721,8 +708,6 @@ int main()
     // ************************************** //
     // Animation loop
     // ************************************** //
-
-
 
     std::cout<<"*** Start GLFW animation loop ***"<<std::endl;
     vcl::glfw_fps_counter fps_counter;
@@ -743,9 +728,25 @@ int main()
         // render(gui.window);
         // framenumber++;
 
-        queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam);        
-        kernel.setArg(3, cl_spheres);
-        // kernel.setArg(0, cl_spheres);  //  works even when commented out
+        // host to device: write
+        queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
+
+        //if (buffer_reset) {
+        //    float arg = 0;
+        //    queue.enqueueFillBuffer(cl_accumbuffer, arg, 0, window_width * window_height * sizeof(cl_float3));
+        //    framenumber = 0;
+        //}
+        // buffer_reset = false;
+        framenumber++;
+
+        // build a new camera for each frame on the CPU
+        hostRendercam = new Camera;
+        interactiveCamera->buildRenderCamera(hostRendercam);
+        // copy the host camera to a OpenCL camera
+        queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam);      
+
+        // update params
+        // kernel.setArg(3, cl_spheres);  // in case that spheres move
         //kernel.setArg(5, framenumber);
         //kernel.setArg(6, cl_camera);
         //kernel.setArg(7, rand());
@@ -755,28 +756,13 @@ int main()
         kernel.setArg(8, cl_camera);
         kernel.setArg(9, rand());
         kernel.setArg(10, rand());
-        // kernel.setArg(9, cl_accumbuffer);
         kernel.setArg(11, WangHash(framenumber));
 
         runKernel();
 
         // draw
-        /*glReadBuffer(GL_COLOR_ATTACHMENT0); opengl_debug();
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_ID); opengl_debug();*/
-        //glDrawBuffer(GL_COLOR_ATTACHMENT3); opengl_debug();
-        //// glReadBuffer(GL_COLOR_ATTACHMENT3); opengl_debug();
-        //glBlitFramebuffer(
-        //    0, 0, window_width, window_height,
-        //    0, 0, window_width, window_height,
-        //    GL_COLOR_BUFFER_BIT,
-        //    GL_LINEAR); opengl_debug();
-        //render();
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();
-        glDrawBuffer(GL_BACK); opengl_debug();
-        //
-        glfwSwapBuffers(gui.window);
-        // drawGL(gui.window);
-        opengl_debug();
+
+        ////////////////////////////// GUI ////////////////////////////
         // Render GUI and update window
         ImGui::End();
         // scene.camera_control.update = !(ImGui::IsAnyWindowFocused());
