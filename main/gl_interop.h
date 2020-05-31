@@ -49,6 +49,10 @@ void createVBO(GLuint* vbo)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+//void createBuffers() {
+//	vert_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(TriangleGPU) * vert_data.size(), vert_data.data(), &err);
+//}
+
 //bool setupGLBuffer(GLuint rbo_IDs[4], GLuint &fbo_ID) {
 //	glDeleteRenderbuffers(4, rbo_IDs);
 //	glDeleteFramebuffers(1, fbo_ID);
@@ -126,3 +130,13 @@ void drawGL(GLFWwindow * window) {
 
 void initOpenCL();
 int test_cl();
+// hash function to calculate new seed for each frame
+// see http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/
+unsigned int WangHash(unsigned int a) {
+	a = (a ^ 61) ^ (a >> 16);
+	a = a + (a << 3);
+	a = a ^ (a >> 4);
+	a = a * 0x27d4eb2d;
+	a = a ^ (a >> 15);
+	return a;
+}

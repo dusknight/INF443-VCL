@@ -29,14 +29,18 @@
 
 // #include <windows.h>  // TODO: config
 
+#include <vector>
 #include <fstream>
+#include "linear_algebra.h"
+#include "camera.h"
+#include "geometry.h"
 
 //-------------CL----------------------
 
 using namespace std;
 using namespace cl;
 
-const int sphere_count = 9;
+const int sphere_count = 4;
 
 
 // OpenCL objects
@@ -47,27 +51,26 @@ Context context;
 Program program;
 Buffer cl_output;
 Buffer cl_spheres;
-BufferGL cl_vbo;
-vector<Memory> cl_vbos;
-
+Buffer cl_camera;
+Buffer cl_accumbuffer;
+// BufferGL cl_vbo;
+// vector<Memory> cl_vbos;
+vector<Memory> image_buffers;
+// image_buffers.resize(4);
+GLuint rbo_IDs[2];
+GLuint fbo_ID;
 // image buffer (not needed with real-time viewport)
-cl_float4* cpu_output;
+// cl_float4* cpu_output;
 cl_int err;
 unsigned int framenumber = 0;
 
-
-struct Sphere
-{
-    cl_float radius;
-    cl_float dummy1;
-    cl_float dummy2;
-    cl_float dummy3;
-    cl_float3 position;
-    cl_float3 color;
-    cl_float3 emission;
-};
-
+Camera* hostRendercam = NULL;
+InteractiveCamera* interactiveCamera;
 Sphere cpu_spheres[sphere_count];
+
+// image buffer (not needed with real-time viewport)
+cl_float4* cpu_output;
+int buffer_reset = 1;
 
 void pickPlatform(Platform& platform, const vector<Platform>& platforms) {
 
@@ -75,7 +78,9 @@ void pickPlatform(Platform& platform, const vector<Platform>& platforms) {
     else {
         int input = 0;
         cout << "\nChoose an OpenCL platform: ";
-        cin >> input;
+        // TODO:
+        // cin >> input;
+        input = 1;
 
         // handle incorrect user input
         while (input < 1 || input > platforms.size()) {
@@ -201,7 +206,7 @@ void initOpenCL()
 
 	// Convert the OpenCL source code to a string// Convert the OpenCL source code to a string
 	string source;
-	ifstream file("../../../cl_kernels/simple.cl");
+	ifstream file("../../../cl_kernels/simple_fbo.cl");
 	if (!file) {
 		cout << "\nNo OpenCL file found!" << endl << "Exiting..." << endl;
 		system("PAUSE");
@@ -214,7 +219,7 @@ void initOpenCL()
 	}
 
 	const char* kernel_source = source.c_str();
-
+    // std::cout << source.substr(8742) << endl;
 	// Create an OpenCL program with source
 	program = Program(context, kernel_source);
 
@@ -236,148 +241,218 @@ void initOpenCL()
 
 void initScene(Sphere* cpu_spheres) {
 
-	// left wall
-	cpu_spheres[0].radius = 200.0f;
-	cpu_spheres[0].position = float3(-200.6f, 0.0f, 0.0f);
-	cpu_spheres[0].color = float3(0.75f, 0.25f, 0.25f);
-	cpu_spheres[0].emission = float3(0.0f, 0.0f, 0.0f);
+    // floor
+    cpu_spheres[0].radius = 200.0f;
+    cpu_spheres[0].position = Vector3Df(0.0f, -200.4f, 0.0f);
+    cpu_spheres[0].color = Vector3Df(0.9f, 0.3f, 0.0f);
+    cpu_spheres[0].emission = Vector3Df(0.0f, 0.0f, 0.0f);
 
-	// right wall
-	cpu_spheres[1].radius = 200.0f;
-	cpu_spheres[1].position = float3(200.6f, 0.0f, 0.0f);
-	cpu_spheres[1].color = float3(0.25f, 0.25f, 0.75f);
-	cpu_spheres[1].emission = float3(0.0f, 0.0f, 0.0f);
+    // left sphere
+    cpu_spheres[1].radius = 0.16f;
+    cpu_spheres[1].position = Vector3Df(-0.25f, -0.24f, -0.1f);
+    cpu_spheres[1].color = Vector3Df(0.9f, 0.8f, 0.7f);
+    cpu_spheres[1].emission = Vector3Df(0.0f, 0.0f, 0.0f);
 
-	// floor
-	cpu_spheres[2].radius = 200.0f;
-	cpu_spheres[2].position = float3(0.0f, -200.4f, 0.0f);
-	cpu_spheres[2].color = float3(0.9f, 0.8f, 0.7f);
-	cpu_spheres[2].emission = float3(0.0f, 0.0f, 0.0f);
+    // right sphere
+    cpu_spheres[2].radius = 0.16f;
+    cpu_spheres[2].position = Vector3Df(0.25f, -0.24f, 0.1f);
+    cpu_spheres[2].color = Vector3Df(0.9f, 0.8f, 0.7f);
+    cpu_spheres[2].emission = Vector3Df(0.0f, 0.0f, 0.0f);
 
-	// ceiling
-	cpu_spheres[3].radius = 200.0f;
-	cpu_spheres[3].position = float3(0.0f, 200.4f, 0.0f);
-	cpu_spheres[3].color = float3(0.9f, 0.8f, 0.7f);
-	cpu_spheres[3].emission = float3(0.0f, 0.0f, 0.0f);
-
-	// back wall
-	cpu_spheres[4].radius = 200.0f;
-	cpu_spheres[4].position = float3(0.0f, 0.0f, -200.4f);
-	cpu_spheres[4].color = float3(0.9f, 0.8f, 0.7f);
-	cpu_spheres[4].emission = float3(0.0f, 0.0f, 0.0f);
-
-	// front wall 
-	cpu_spheres[5].radius = 200.0f;
-	cpu_spheres[5].position = float3(0.0f, 0.0f, 202.0f);
-	cpu_spheres[5].color = float3(0.9f, 0.8f, 0.7f);
-	cpu_spheres[5].emission = float3(0.0f, 0.0f, 0.0f);
-
-	// left sphere
-	cpu_spheres[6].radius = 0.16f;
-	cpu_spheres[6].position = float3(-0.25f, -0.24f, -0.1f);
-	cpu_spheres[6].color = float3(0.9f, 0.8f, 0.7f);
-	cpu_spheres[6].emission = float3(0.0f, 0.0f, 0.0f);
-
-	// right sphere
-	cpu_spheres[7].radius = 0.16f;
-	cpu_spheres[7].position = float3(0.25f, -0.24f, 0.1f);
-	cpu_spheres[7].color = float3(0.9f, 0.8f, 0.7f);
-	cpu_spheres[7].emission = float3(0.0f, 0.0f, 0.0f);
-
-	// lightsource
-	cpu_spheres[8].radius = 1.0f;
-	cpu_spheres[8].position = float3(0.0f, 1.36f, 0.0f);
-	cpu_spheres[8].color = float3(0.0f, 0.0f, 0.0f);
-	cpu_spheres[8].emission = float3(9.0f, 8.0f, 6.0f);
-
+    // lightsource
+    cpu_spheres[3].radius = 1.0f;
+    cpu_spheres[3].position = Vector3Df(0.0f, 1.36f, 0.0f);
+    cpu_spheres[3].color = Vector3Df(0.0f, 0.0f, 0.0f);
+    cpu_spheres[3].emission = Vector3Df(9.0f, 8.0f, 6.0f);
 }
+
 
 void initCLKernel() {
 
-	// pick a rendermode
-	unsigned int rendermode = 1;
+    // pick a rendermode
+    unsigned int rendermode = 1;
 
-	// Create a kernel (entry point in the OpenCL source program)
-	kernel = Kernel(program, "render_kernel");
+    // Create a kernel (entry point in the OpenCL source program)
+    kernel = Kernel(program, "render_kernel");
 
-	// specify OpenCL kernel arguments
-	//kernel.setArg(0, cl_output);
-	kernel.setArg(0, cl_spheres);
-	kernel.setArg(1, window_width);
-	kernel.setArg(2, window_height);
-	kernel.setArg(3, sphere_count);
-	kernel.setArg(4, cl_vbo);
-	kernel.setArg(5, framenumber);
+    // specify OpenCL kernel arguments
+    //kernel.setArg(0, cl_output);
+    kernel.setArg(0, image_buffers[0]);
+    kernel.setArg(1, image_buffers[1]);
+    kernel.setArg(2, buffer_reset);
+    kernel.setArg(3, cl_spheres);
+    kernel.setArg(4, window_width);
+    kernel.setArg(5, window_height);
+    kernel.setArg(6, sphere_count);
+    kernel.setArg(7, framenumber);
+    kernel.setArg(8, cl_camera);
+    kernel.setArg(9, rand());
+    kernel.setArg(10, rand());
+    // kernel.setArg(9, cl_accumbuffer);
+    kernel.setArg(11, WangHash(framenumber));
 }
 
 void runKernel() {
-	// every pixel in the image has its own thread or "work item",
-	// so the total amount of work items equals the number of pixels
-	std::size_t global_work_size = window_width * window_height;
-	std::size_t local_work_size = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);;
+    // every pixel in the image has its own thread or "work item",
+    // so the total amount of work items equals the number of pixels
+    std::size_t global_work_size = window_width * window_height;
+    std::size_t local_work_size = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);;
 
-	// Ensure the global work size is a multiple of local work size
-	if (global_work_size % local_work_size != 0)
-		global_work_size = (global_work_size / local_work_size + 1) * local_work_size;
+    // Ensure the global work size is a multiple of local work size
+    if (global_work_size % local_work_size != 0)
+        global_work_size = (global_work_size / local_work_size + 1) * local_work_size;
 
-	//Make sure OpenGL is done using the VBOs
-	glFinish();
+    // setup RBO for reading
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_ID);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glDrawBuffer(GL_BACK);
+
+    //Make sure OpenGL is done using the VBOs
+    glFinish();
 
     cl_int err_code;
-	//this passes in the vector of VBO buffer objects 
-	err_code = queue.enqueueAcquireGLObjects(&cl_vbos);
+    //this passes in the vector of VBO buffer objects 
+    err_code= queue.enqueueAcquireGLObjects(&image_buffers);
     if (err_code != CL_SUCCESS) {
         std::cerr << "ERROR in locking texture : " << err_code << std::endl;
     }
-	queue.finish();
+    queue.finish();
 
-	// launch the kernel
-	err_code = queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size); // local_work_size
+    // launch the kernel
+    err_code = queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size); // local_work_size
     if (err_code != CL_SUCCESS) {
-        std::cerr << "ERROR in running queue :" <<err_code<< std::endl;
+        std::cerr << "ERROR in running queue :" << err_code << std::endl;
     }
-	queue.finish();
+    queue.finish();
 
-	//Release the VBOs so OpenGL can play with them
-	err_code = queue.enqueueReleaseGLObjects(&cl_vbos);
+    //Release the VBOs so OpenGL can play with them
+    // err_code = queue.enqueueReleaseGLObjects(&cl_vbos);
+    err_code = queue.enqueueReleaseGLObjects(&image_buffers);
     if (err_code != CL_SUCCESS) {
         std::cerr << "ERROR in unlocking texture :" << err_code << std::endl;
     }
-	queue.finish();
+    queue.finish();
+    
+    glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_ID);
+    // clear previous frame
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBlitFramebuffer(
+        0, 0, window_width, window_height,
+        0, 0, window_width, window_height,
+        GL_COLOR_BUFFER_BIT,
+        GL_LINEAR); opengl_debug();
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();
+    glDrawBuffer(GL_BACK); opengl_debug();
+    
+}
+
+void render() {
+    glReadBuffer(GL_COLOR_ATTACHMENT3);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBlitFramebuffer(
+        0, 0, window_width, window_height,
+        0, 0, window_width, window_height,
+        GL_COLOR_BUFFER_BIT,
+        GL_LINEAR); opengl_debug();
+    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();
+    //glDrawBuffer(GL_BACK); opengl_debug();
+}
+
+bool setupBufferFBO() {
+    glDeleteRenderbuffers(2, rbo_IDs);
+    glDeleteFramebuffers(1, &fbo_ID);
+
+    glGenFramebuffers(1, &fbo_ID);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_ID);
+
+    glGenRenderbuffers(2, rbo_IDs);
+
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[0]);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, window_width, window_height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo_IDs[0]);
+
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[1]);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, window_width, window_height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, rbo_IDs[1]);
+
+    //glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[2]);
+    //glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, window_width, window_height);
+    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_RENDERBUFFER, rbo_IDs[2]);
+
+    //glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[3]);
+    //glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, window_width, window_height);
+    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_RENDERBUFFER, rbo_IDs[3]);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer not complete, code: " << status << endl;
+    }
+    glClearColor(0.f, 0.f, 0.f, 1.0f);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glDrawBuffer(GL_COLOR_ATTACHMENT2);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glDrawBuffer(GL_COLOR_ATTACHMENT3);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    return true;
 }
 
 
-// hash function to calculate new seed for each frame
-// see http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/
-unsigned int WangHash(unsigned int a) {
-	a = (a ^ 61) ^ (a >> 16);
-	a = a + (a << 3);
-	a = a ^ (a >> 4);
-	a = a * 0x27d4eb2d;
-	a = a ^ (a >> 15);
-	return a;
-}
+void render(GLFWwindow* window) {
 
+    //cpu_spheres[1].position.y += 0.01f;
+    queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
 
-void render(GLFWwindow * window) {
+    if (buffer_reset) {
+        float arg = 0;
+        queue.enqueueFillBuffer(cl_accumbuffer, arg, 0, window_width * window_height * sizeof(cl_float3));
+        framenumber = 0;
+    }
+    // buffer_reset = false;
+    framenumber++;
 
-	framenumber++;
+    // build a new camera for each frame on the CPU
+    interactiveCamera->buildRenderCamera(hostRendercam);
+    // copy the host camera to a OpenCL camera
+    queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam);
+    queue.finish();
 
-	cpu_spheres[6].position.s[1] += 0.01;
+    // kernel.setArg(0, cl_spheres);  //  works even when commented out
+    kernel.setArg(5, framenumber);
+    kernel.setArg(6, cl_camera);
+    kernel.setArg(7, rand());
+    kernel.setArg(8, rand());
+    kernel.setArg(10, WangHash(framenumber));
 
-	queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
+    runKernel();
 
-	kernel.setArg(0, cl_spheres);
-	kernel.setArg(5, WangHash(framenumber));
-
-	runKernel();
-
-	drawGL(window);
+    drawGL(window);
 }
 
 void cleanUp() {
-	//	delete cpu_output;
+    //	delete cpu_output;
 }
+
+// initialise camera on the CPU
+void initCamera()
+{
+    delete interactiveCamera;
+    interactiveCamera = new InteractiveCamera();
+
+    interactiveCamera->setResolution(window_width, window_height);
+    interactiveCamera->setFOVX(45);
+}
+
 
 void main_old(int argc, char** argv) {
 
@@ -615,7 +690,13 @@ int main()
     // initialise OpenCL
     initOpenCL();
     // create vertex buffer object
-    createVBO(&vbo);
+    // createVBO(&vbo);
+    cl_int err;
+    setupBufferFBO();  // first GL
+    for (int i = 0; i < 2; i++) {  // Then CL
+        image_buffers.push_back(cl::BufferRenderGL(context, CL_MEM_READ_WRITE, rbo_IDs[i], &err));
+        if (err != CL_SUCCESS) std::cerr << "ERROR allocating RBO : " << err << std::endl;
+    }
 
 	//make sure OpenGL is finished before we proceed
 	glFinish();
@@ -623,14 +704,15 @@ int main()
 	// initialise scene
 	initScene(cpu_spheres);
 
-
-
 	cl_spheres = Buffer(context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
 	queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
 
 	// create OpenCL buffer from OpenGL vertex buffer object
-	cl_vbo = BufferGL(context, CL_MEM_WRITE_ONLY, vbo);
-	cl_vbos.push_back(cl_vbo);
+	// cl_vbo = BufferGL(context, CL_MEM_WRITE_ONLY, vbo);
+	// cl_vbos.push_back(cl_vbo);
+
+    // reserve memory buffer on OpenCL device to hold image buffer for accumulated samples
+    cl_accumbuffer = Buffer(context, CL_MEM_WRITE_ONLY, window_width * window_height * sizeof(cl_float3));
 
 	// intitialise the kernel
 	initCLKernel();
@@ -661,24 +743,37 @@ int main()
         // render(gui.window);
         // framenumber++;
 
-        cpu_spheres[6].position.s[1] += 0.01;
-        queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
-        kernel.setArg(0, cl_spheres);
-        kernel.setArg(5, WangHash(framenumber));
+        queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam);        
+        kernel.setArg(3, cl_spheres);
+        // kernel.setArg(0, cl_spheres);  //  works even when commented out
+        //kernel.setArg(5, framenumber);
+        //kernel.setArg(6, cl_camera);
+        //kernel.setArg(7, rand());
+        //kernel.setArg(8, rand());
+        //kernel.setArg(10, WangHash(framenumber));
+        kernel.setArg(7, framenumber);
+        kernel.setArg(8, cl_camera);
+        kernel.setArg(9, rand());
+        kernel.setArg(10, rand());
+        // kernel.setArg(9, cl_accumbuffer);
+        kernel.setArg(11, WangHash(framenumber));
+
         runKernel();
 
-        // glDrawElements(GL_TRIANGLES, sizeof)
-        // glEnable(GL_VERTEX_ARRAY); opengl_debug();
-        glEnableVertexAttribArray(0); opengl_debug();
-        glBindBuffer(GL_ARRAY_BUFFER, vbo); opengl_debug();
-        glVertexAttribPointer(vbo, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0); opengl_debug();
-        // glVertexPointer(3, GL_FLOAT, sizeof(cl_float3), 0); opengl_debug();
-        // glDrawBuffer(9, cl_vbos.data()); 
-        // glColorPointer(3, GL_FLOAT_VEC3,  0, 0); opengl_debug();
-        glDrawArrays(GL_POINTS, 0, window_width * window_height);
-        // glDrawElements(GL_TRIANGLES, window_width * window_height, GL_UNSIGNED_INT, 0);
-        opengl_debug();
-
+        // draw
+        /*glReadBuffer(GL_COLOR_ATTACHMENT0); opengl_debug();
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_ID); opengl_debug();*/
+        //glDrawBuffer(GL_COLOR_ATTACHMENT3); opengl_debug();
+        //// glReadBuffer(GL_COLOR_ATTACHMENT3); opengl_debug();
+        //glBlitFramebuffer(
+        //    0, 0, window_width, window_height,
+        //    0, 0, window_width, window_height,
+        //    GL_COLOR_BUFFER_BIT,
+        //    GL_LINEAR); opengl_debug();
+        //render();
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();
+        glDrawBuffer(GL_BACK); opengl_debug();
+        //
         glfwSwapBuffers(gui.window);
         // drawGL(gui.window);
         opengl_debug();

@@ -32,6 +32,7 @@ file(
     source_files
     vcl/*.[ch]pp
     main/*.[ch]pp
+    mian/*.h
     third_party/*.[ch]pp
     third_party/*.[ch]
     scenes/*.[ch]pp
