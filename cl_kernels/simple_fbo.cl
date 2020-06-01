@@ -123,30 +123,6 @@ struct Ray createCamRay_simple(const int x_coord, const int y_coord, const int w
 	return ray;
 }
 
-bool intersect_sphere_t(const struct Sphere* sphere, const struct Ray* ray, float* t)
-{
-	float3 rayToCenter = sphere->pos - ray->origin;
-
-	/* calculate coefficients a, b, c from quadratic equation */
-
-	/* float a = dot(ray->dir, ray->dir); // ray direction is normalised, dotproduct simplifies to 1 */ 
-	float b = dot(rayToCenter, ray->dir);
-	float c = dot(rayToCenter, rayToCenter) - sphere->radius*sphere->radius;
-	float disc = b * b - c; /* discriminant of quadratic formula */
-
-	/* solve for t (distance to hitpoint along ray) */
-
-	if (disc < 0.0f) return false;
-	else *t = b - sqrt(disc);
-
-	if (*t < 0.0f){
-		*t = b + sqrt(disc);
-		if (*t < 0.0f) return false; 
-	}
-
-	else return true;
-}
-
 /* (__global Sphere* sphere, const Ray* ray) */
 float intersect_sphere(const Sphere* sphere, const Ray* ray) /* version using local copy of sphere */
 {
@@ -283,19 +259,16 @@ render_kernel(
 
 	/* create and initialise a sphere */
 	struct Sphere sphere1;
-	sphere1.radius = 0.4f;
-	sphere1.pos = (float3)(0.0f, 0.0f, 3.0f);
-	sphere1.color = (float3)(0.9f, 0.3f, 0.0f);
+	sphere1 = spheres[1];
 
 	/* intersect ray with sphere */
-	float t = 1e20;
-	intersect_sphere_t(&sphere1, &camray, &t);
+	float t = intersect_sphere(&sphere1, &camray);
 
 	float4 colorf4 = (float4)(0.0f, 0.0f, 0.0f, 1.0f);
 
 	/* if ray misses sphere, return background colour 
 	background colour is a blue-ish gradient dependent on image height */
-	if (t > 1e19 && rendermode != 1){ 
+	if (t < EPSILON && rendermode != 1){ 
 		colorf4 = (float4)(fy * 0.1f, fy * 0.3f, 0.3f, 1.0f);
 		write_imagef(outputImage, pixel, colorf4);
 		return;

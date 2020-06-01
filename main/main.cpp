@@ -246,7 +246,7 @@ void initOpenCL()
 void initScene(Sphere* cpu_spheres) {
 
     // floor
-    cpu_spheres[0].radius = 2.0f;
+    cpu_spheres[0].radius = 200.0f;
     cpu_spheres[0].position = Vector3Df(0.0f, -200.4f, 0.0f);
     cpu_spheres[0].color = Vector3Df(0.9f, 0.3f, 0.0f);
     cpu_spheres[0].emission = Vector3Df(0.0f, 0.0f, 0.0f);
