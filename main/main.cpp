@@ -106,7 +106,6 @@ void initOpenCL()
 
 
 	// Pick one device
-	//Device device;
 	pickDevice(device, devices);
 	cout << "\nUsing OpenCL device: \t" << device.getInfo<CL_DEVICE_NAME>() << endl;
 
@@ -268,7 +267,6 @@ void initCLKernel() {
     kernel = Kernel(program, "render_kernel");
 
     // specify OpenCL kernel arguments
-    //kernel.setArg(0, cl_output);
     if (buffer_switch) {
         kernel.setArg(0, image_buffers[0]);
         kernel.setArg(1, image_buffers[1]);
@@ -287,8 +285,6 @@ void initCLKernel() {
     kernel.setArg(8, cl_camera);
     kernel.setArg(9, rand());
     kernel.setArg(10, rand());
-    // kernel.setArg(9, cl_accumbuffer);
-    // kernel.setArg(11, framenumber);
 }
 
 void runKernel() {
@@ -738,18 +734,14 @@ int main()
         queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam);      
 
         // update params
-        kernel.setArg(3, cl_spheres);  // in case that spheres move
-        //kernel.setArg(5, framenumber);
-        //kernel.setArg(6, cl_camera);
-        //kernel.setArg(7, rand());
-        //kernel.setArg(8, rand());
-        //kernel.setArg(10, WangHash(framenumber));
+        buffer_reset = 0;
+        
         kernel.setArg(2, buffer_reset);
+        kernel.setArg(3, cl_spheres);  // in case that spheres move
         kernel.setArg(7, framenumber);
         kernel.setArg(8, cl_camera);
         kernel.setArg(9, rand());
         kernel.setArg(10, rand());
-        // kernel.setArg(11, WangHash(framenumber));
 
         runKernel();
 
@@ -802,5 +794,31 @@ void mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    scene_current.keyboard_input(scene, window, key, scancode, action, mods);
+    // scene_current.keyboard_input(scene, window, key, scancode, action, mods);
+    if (ImGui::GetIO().WantCaptureKeyboard)
+        return;
+    //GlfwManager* ptr = (GlfwManager*)glfwGetWindowUserPointer(window);
+
+    //if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    //    GlfwManager::cameraUpdateCallback(glm::vec4(0, 0, 1, 0), 0, 0);
+
+    //if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    //    cameraUpdateCallback(glm::vec4(0, 0, -1, 0), 0, 0);
+
+    //if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    //    cameraUpdateCallback(glm::vec4(-1, 0, 0, 0), 0, 0);
+
+    //if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    //    cameraUpdateCallback(glm::vec4(1, 0, 0, 0), 0, 0);
+
+    //if (key == GLFW_KEY_HOME && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    //    GlfwManager::cameraUpdateCallback(glm::vec4(0, 1, 0, 0), 0, 0);
+
+    //if (key == GLFW_KEY_END && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    //    cameraUpdateCallback(glm::vec4(0, -1, 0, 0), 0, 0);
+
+    //if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    //    ptr->space_flag = true;
+    //if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE)
+    //    ptr->space_flag = false;
 }
