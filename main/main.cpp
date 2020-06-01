@@ -70,7 +70,8 @@ Sphere cpu_spheres[sphere_count];
 
 // image buffer (not needed with real-time viewport)
 cl_float4* cpu_output;
-int buffer_reset = 1;
+int buffer_switch = 1;
+int buffer_reset = 0;
 
 void pickPlatform(Platform& platform, const vector<Platform>& platforms) {
 
@@ -226,6 +227,8 @@ void initOpenCL()
 	// Build the program for the selected device 
 	cl_int result = program.build({ device }); // "-cl-fast-relaxed-math"
 	if (result) cout << "Error during compilation OpenCL code!!!\n (" << result << ")" << endl;
+    // std::string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    // std::cout << buildlog << endl;
 	if (result == CL_BUILD_PROGRAM_FAILURE || result == CL_INVALID_PROGRAM) {
 		// Get the build log
 		std::string name = device.getInfo<CL_DEVICE_NAME>();
@@ -277,8 +280,15 @@ void initCLKernel() {
 
     // specify OpenCL kernel arguments
     //kernel.setArg(0, cl_output);
-    kernel.setArg(0, image_buffers[0]);
-    kernel.setArg(1, image_buffers[1]);
+    if (buffer_switch) {
+        kernel.setArg(0, image_buffers[0]);
+        kernel.setArg(1, image_buffers[1]);
+    }
+    else {
+        kernel.setArg(1, image_buffers[0]);
+        kernel.setArg(0, image_buffers[1]);
+    }
+    // kernel.setArg(2, buffer_switch);
     kernel.setArg(2, buffer_reset);
     kernel.setArg(3, cl_spheres);
     kernel.setArg(4, window_width);
@@ -332,13 +342,34 @@ void runKernel() {
         std::cerr << "ERROR in unlocking texture :" << err_code << std::endl;
     }
     queue.finish();
+
+    // read from FBO, save a copy
+    //glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_ID);
+    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_ID);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_ID);
+    if (buffer_switch) {
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    }
+    else {
+        glReadBuffer(GL_COLOR_ATTACHMENT1);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    }
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBlitFramebuffer(
+        0, 0, window_width, window_height,
+        0, 0, window_width, window_height,
+        GL_COLOR_BUFFER_BIT,
+        GL_LINEAR); opengl_debug();
     
-    // glReadBuffer(GL_COLOR_ATTACHMENT0); // TODO???
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_ID);  // for rendering: FBO
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  // for rendering: FBO
-    // glDrawBuffer(GL_COLOR_ATTACHMENT0);  // TODO ??????
-    // clear previous frame
-    glClear(GL_COLOR_BUFFER_BIT);
+
+    // clear previous frame and draw
+    if (buffer_switch) glReadBuffer(GL_COLOR_ATTACHMENT0);
+    else  glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glDrawBuffer(GL_BACK);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glBlitFramebuffer(
         0, 0, window_width, window_height,
@@ -346,7 +377,9 @@ void runKernel() {
         GL_COLOR_BUFFER_BIT,
         GL_LINEAR); opengl_debug();
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();  // back to default
-    glDrawBuffer(GL_BACK); opengl_debug();  // draw to back buffer, waiting for swap
+    // glDrawBuffer(GL_BACK); opengl_debug();  // draw to back buffer, waiting for swap
+
+    buffer_switch = 1- buffer_switch;
     
 }
 
@@ -420,7 +453,7 @@ void render(GLFWwindow* window) {
     //cpu_spheres[1].position.y += 0.01f;
     queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
 
-    if (buffer_reset) {
+    if (buffer_switch) {
         float arg = 0;
         queue.enqueueFillBuffer(cl_accumbuffer, arg, 0, window_width * window_height * sizeof(cl_float3));
         framenumber = 0;
@@ -752,6 +785,7 @@ int main()
         //kernel.setArg(7, rand());
         //kernel.setArg(8, rand());
         //kernel.setArg(10, WangHash(framenumber));
+        kernel.setArg(2, buffer_reset);
         kernel.setArg(7, framenumber);
         kernel.setArg(8, cl_camera);
         kernel.setArg(9, rand());

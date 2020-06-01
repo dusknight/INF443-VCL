@@ -260,11 +260,10 @@ __kernel void render_kernel(
 	colorf4.x = finalcolor.x;
 	colorf4.y = finalcolor.y;
 	colorf4.z = finalcolor.z;
-
 	
 	if (reset == 1)
 	{
-		if(x_coord < 100 || x_coord > 500) colorf4 = (float4)(0.5f, 0.5f, 0.5f, 1.0f);
+		if(x_coord < 100 || x_coord > 500) colorf4 = (float4)((float)seed0 / 1000, 0.0f, 0.0f, 1.0f);
 		write_imagef(outputImage, pixel, colorf4);
 	}
 	else
@@ -275,7 +274,7 @@ __kernel void render_kernel(
 		colorf4 += (prev_color * num_passes);
 		colorf4 /= (num_passes + 1);
 		colorf4.w = num_passes + 1;
-
+		if(x_coord < 100 || x_coord > 500) colorf4 = (float4)(0.0f, (float)seed0 / 1000, 0.0f, 1.0f);
 		write_imagef(outputImage, pixel, colorf4);
 	}
 }
