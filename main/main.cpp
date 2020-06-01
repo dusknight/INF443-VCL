@@ -73,60 +73,6 @@ cl_float4* cpu_output;
 int buffer_switch = 1;
 int buffer_reset = 0;
 
-void pickPlatform(Platform& platform, const vector<Platform>& platforms) {
-
-    if (platforms.size() == 1) platform = platforms[0];
-    else {
-        int input = 0;
-        cout << "\nChoose an OpenCL platform: ";
-        // TODO:
-        // cin >> input;
-        input = 1;
-
-        // handle incorrect user input
-        while (input < 1 || input > platforms.size()) {
-            cin.clear(); //clear errors/bad flags on cin
-            cin.ignore(cin.rdbuf()->in_avail(), '\n'); // ignores exact number of chars in cin buffer
-            cout << "No such option. Choose an OpenCL platform: ";
-            cin >> input;
-        }
-        platform = platforms[input - 1];
-    }
-}
-
-void pickDevice(Device& device, const vector<Device>& devices) {
-
-    if (devices.size() == 1) device = devices[0];
-    else {
-        int input = 0;
-        cout << "\nChoose an OpenCL device: ";
-        cin >> input;
-
-        // handle incorrect user input
-        while (input < 1 || input > devices.size()) {
-            cin.clear(); //clear errors/bad flags on cin
-            cin.ignore(cin.rdbuf()->in_avail(), '\n'); // ignores exact number of chars in cin buffer
-            cout << "No such option. Choose an OpenCL device: ";
-            cin >> input;
-        }
-        device = devices[input - 1];
-    }
-}
-
-void printErrorLog(const Program& program, const Device& device) {
-
-    // Get the error log and print to console
-    string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
-    cerr << "Build log:" << std::endl << buildlog << std::endl;
-
-    // Print the error log to a file
-    FILE* log = fopen("errorlog.txt", "w");
-    fprintf(log, "%s\n", buildlog);
-    cout << "Error log saved in 'errorlog.txt'" << endl;
-    system("PAUSE");
-    exit(1);
-}
-
 
 void initOpenCL()
 {
@@ -164,15 +110,6 @@ void initOpenCL()
 	pickDevice(device, devices);
 	cout << "\nUsing OpenCL device: \t" << device.getInfo<CL_DEVICE_NAME>() << endl;
 
-	// Create an OpenCL context on that device.
-	// Windows specific OpenCL-OpenGL interop
-	//cl_context_properties properties[] =
-	//{
-	//	CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
-	//	CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
-	//	CL_CONTEXT_PLATFORM, (cl_context_properties)platform(),
-	//	0
-	//};
 #if defined _WIN32
 	static cl_context_properties properties[] =
 	{
@@ -229,7 +166,7 @@ void initOpenCL()
 	if (result) cout << "Error during compilation OpenCL code!!!\n (" << result << ")" << endl;
     // std::string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
     // std::cout << buildlog << endl;
-    std::cout << source.substr(10560) << endl;
+    // std::cout << source.substr(10560) << endl;
 	if (result == CL_BUILD_PROGRAM_FAILURE || result == CL_INVALID_PROGRAM) {
 		// Get the build log
 		std::string name = device.getInfo<CL_DEVICE_NAME>();
@@ -241,11 +178,62 @@ void initOpenCL()
 	}
 }
 
-#define float3(x, y, z) {{x, y, z}}  // macro to replace ugly initializer braces
-
 void initScene(Sphere* cpu_spheres) {
 
-    // floor
+    //// left wall
+    //cpu_spheres[0].radius = 200.0f;
+    //cpu_spheres[0].position = Vector3Df(-200.6f, 0.0f, 0.0f);
+    //cpu_spheres[0].color = Vector3Df(0.75f, 0.25f, 0.25f);
+    //cpu_spheres[0].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+
+    //// right wall
+    //cpu_spheres[1].radius = 200.0f;
+    //cpu_spheres[1].position = Vector3Df(200.6f, 0.0f, 0.0f);
+    //cpu_spheres[1].color = Vector3Df(0.25f, 0.25f, 0.75f);
+    //cpu_spheres[1].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+
+    //// floor
+    //cpu_spheres[2].radius = 200.0f;
+    //cpu_spheres[2].position = Vector3Df(0.0f, -200.4f, 0.0f);
+    //cpu_spheres[2].color = Vector3Df(0.9f, 0.8f, 0.7f);
+    //cpu_spheres[2].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+
+    //// ceiling
+    //cpu_spheres[3].radius = 200.0f;
+    //cpu_spheres[3].position = Vector3Df(0.0f, 200.4f, 0.0f);
+    //cpu_spheres[3].color = Vector3Df(0.9f, 0.8f, 0.7f);
+    //cpu_spheres[3].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+
+    //// back wall
+    //cpu_spheres[4].radius = 200.0f;
+    //cpu_spheres[4].position = Vector3Df(0.0f, 0.0f, -200.4f);
+    //cpu_spheres[4].color = Vector3Df(0.9f, 0.8f, 0.7f);
+    //cpu_spheres[4].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+
+    //// front wall 
+    //cpu_spheres[5].radius = 200.0f;
+    //cpu_spheres[5].position = Vector3Df(0.0f, 0.0f, 202.0f);
+    //cpu_spheres[5].color = Vector3Df(0.9f, 0.8f, 0.7f);
+    //cpu_spheres[5].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+
+    //// left sphere
+    //cpu_spheres[6].radius = 0.16f;
+    //cpu_spheres[6].position = Vector3Df(-0.25f, -0.24f, -0.1f);
+    //cpu_spheres[6].color = Vector3Df(0.9f, 0.8f, 0.7f);
+    //cpu_spheres[6].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+
+    //// right sphere
+    //cpu_spheres[7].radius = 0.16f;
+    //cpu_spheres[7].position = Vector3Df(0.25f, -0.24f, 0.1f);
+    //cpu_spheres[7].color = Vector3Df(0.9f, 0.8f, 0.7f);
+    //cpu_spheres[7].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+
+    //// lightsource
+    //cpu_spheres[8].radius = 1.0f;
+    //cpu_spheres[8].position = Vector3Df(0.0f, 1.36f, 0.0f);
+    //cpu_spheres[8].color = Vector3Df(0.0f, 0.0f, 0.0f);
+    //cpu_spheres[8].emission = Vector3Df(9.0f, 8.0f, 6.0f);
+        // floor
     cpu_spheres[0].radius = 200.0f;
     cpu_spheres[0].position = Vector3Df(0.0f, -200.4f, 0.0f);
     cpu_spheres[0].color = Vector3Df(0.9f, 0.3f, 0.0f);
@@ -300,7 +288,7 @@ void initCLKernel() {
     kernel.setArg(9, rand());
     kernel.setArg(10, rand());
     // kernel.setArg(9, cl_accumbuffer);
-    kernel.setArg(11, WangHash(framenumber));
+    // kernel.setArg(11, framenumber);
 }
 
 void runKernel() {
@@ -361,7 +349,7 @@ void runKernel() {
         0, 0, window_width, window_height,
         0, 0, window_width, window_height,
         GL_COLOR_BUFFER_BIT,
-        GL_LINEAR); opengl_debug();
+        GL_NEAREST); opengl_debug();
     
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_ID);  // for rendering: FBO
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  // for rendering: FBO
@@ -376,7 +364,7 @@ void runKernel() {
         0, 0, window_width, window_height,
         0, 0, window_width, window_height,
         GL_COLOR_BUFFER_BIT,
-        GL_LINEAR); opengl_debug();
+        GL_NEAREST); opengl_debug();
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();  // back to default
     // glDrawBuffer(GL_BACK); opengl_debug();  // draw to back buffer, waiting for swap
 
@@ -449,36 +437,6 @@ bool setupBufferFBO() {
 }
 
 
-void render(GLFWwindow* window) {
-
-    //cpu_spheres[1].position.y += 0.01f;
-    queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
-
-    if (buffer_switch) {
-        float arg = 0;
-        queue.enqueueFillBuffer(cl_accumbuffer, arg, 0, window_width * window_height * sizeof(cl_float3));
-        framenumber = 0;
-    }
-    // buffer_reset = false;
-    framenumber++;
-
-    // build a new camera for each frame on the CPU
-    interactiveCamera->buildRenderCamera(hostRendercam);
-    // copy the host camera to a OpenCL camera
-    queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam);
-    queue.finish();
-
-    // kernel.setArg(0, cl_spheres);  //  works even when commented out
-    kernel.setArg(5, framenumber);
-    kernel.setArg(6, cl_camera);
-    kernel.setArg(7, rand());
-    kernel.setArg(8, rand());
-    kernel.setArg(10, WangHash(framenumber));
-
-    runKernel();
-
-    drawGL(window);
-}
 
 void cleanUp() {
     //	delete cpu_output;
@@ -786,12 +744,12 @@ int main()
         //kernel.setArg(7, rand());
         //kernel.setArg(8, rand());
         //kernel.setArg(10, WangHash(framenumber));
-        kernel.setArg(2, buffer_switch);
+        kernel.setArg(2, buffer_reset);
         kernel.setArg(7, framenumber);
         kernel.setArg(8, cl_camera);
         kernel.setArg(9, rand());
         kernel.setArg(10, rand());
-        kernel.setArg(11, WangHash(framenumber));
+        // kernel.setArg(11, WangHash(framenumber));
 
         runKernel();
 

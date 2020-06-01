@@ -49,60 +49,6 @@ void createVBO(GLuint* vbo)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-//void createBuffers() {
-//	vert_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(TriangleGPU) * vert_data.size(), vert_data.data(), &err);
-//}
-
-//bool setupGLBuffer(GLuint rbo_IDs[4], GLuint &fbo_ID) {
-//	glDeleteRenderbuffers(4, rbo_IDs);
-//	glDeleteFramebuffers(1, fbo_ID);
-//
-//	glGenFramebuffers(1, &fbo_ID);
-//	glBindFramebuffer(GL_FRAMEBUFFER, fbo_ID);
-//
-//	glGenRenderbuffers(4, rbo_IDs);
-//
-//	glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[0]);
-//	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, framebuffer_width, framebuffer_height);
-//	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo_IDs[0]);
-//
-//	glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[1]);
-//	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, framebuffer_width, framebuffer_height);
-//	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, rbo_IDs[1]);
-//
-//	glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[2]);
-//	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, framebuffer_width, framebuffer_height);
-//	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_RENDERBUFFER, rbo_IDs[2]);
-//
-//	glBindRenderbuffer(GL_RENDERBUFFER, rbo_IDs[3]);
-//	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, framebuffer_width, framebuffer_height);
-//	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_RENDERBUFFER, rbo_IDs[3]);
-//
-//	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-//
-//	if (status != GL_FRAMEBUFFER_COMPLETE) {
-//		// TODO ERROR
-//		std::cerr << " ERROR ... TODO" << std::endl;
-//	}
-//
-//	glClearColor(0.f, 0.f, 0.f, 1.0f);
-//	glDrawBuffer(GL_COLOR_ATTACHMENT0);
-//	glClear(GL_COLOR_BUFFER_BIT);
-//
-//	glDrawBuffer(GL_COLOR_ATTACHMENT1);
-//	glClear(GL_COLOR_BUFFER_BIT);
-//
-//	glDrawBuffer(GL_COLOR_ATTACHMENT2);
-//	glClear(GL_COLOR_BUFFER_BIT);
-//
-//	glDrawBuffer(GL_COLOR_ATTACHMENT3);
-//	glClear(GL_COLOR_BUFFER_BIT);
-//
-//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-//	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-//
-//	return true;
-//}
 
 void drawGL(GLFWwindow * window) {
 
@@ -130,13 +76,57 @@ void drawGL(GLFWwindow * window) {
 
 void initOpenCL();
 int test_cl();
-// hash function to calculate new seed for each frame
-// see http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/
-unsigned int WangHash(unsigned int a) {
-	a = (a ^ 61) ^ (a >> 16);
-	a = a + (a << 3);
-	a = a ^ (a >> 4);
-	a = a * 0x27d4eb2d;
-	a = a ^ (a >> 15);
-	return a;
+
+void printErrorLog(const cl::Program& program, const cl::Device& device) {
+
+	// Get the error log and print to console
+	std::string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+	std::cerr << "Build log:" << std::endl << buildlog << std::endl;
+
+	// Print the error log to a file
+	FILE* log = fopen("errorlog.txt", "w");
+	fprintf(log, "%s\n", buildlog);
+	std::cout << "Error log saved in 'errorlog.txt'" << std::endl;
+	system("PAUSE");
+	exit(1);
+}
+
+void pickPlatform(cl::Platform& platform, const std::vector<cl::Platform>& platforms) {
+
+	if (platforms.size() == 1) platform = platforms[0];
+	else {
+		int input = 0;
+		std::cout << "\nChoose an OpenCL platform: ";
+		// TODO:
+		// cin >> input;
+		input = 1;
+
+		// handle incorrect user input
+		while (input < 1 || input > platforms.size()) {
+			std::cin.clear(); //clear errors/bad flags on cin
+			std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n'); // ignores exact number of chars in cin buffer
+			std::cout << "No such option. Choose an OpenCL platform: ";
+			std::cin >> input;
+		}
+		platform = platforms[input - 1];
+	}
+}
+
+void pickDevice(cl::Device& device, const std::vector<cl::Device>& devices) {
+
+	if (devices.size() == 1) device = devices[0];
+	else {
+		int input = 0;
+		std::cout << "\nChoose an OpenCL device: ";
+		std::cin >> input;
+
+		// handle incorrect user input
+		while (input < 1 || input > devices.size()) {
+			std::cin.clear(); //clear errors/bad flags on cin
+			std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n'); // ignores exact number of chars in cin buffer
+			std::cout << "No such option. Choose an OpenCL device: ";
+			std::cin >> input;
+		}
+		device = devices[input - 1];
+	}
 }

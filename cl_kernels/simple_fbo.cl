@@ -33,6 +33,17 @@ typedef struct Camera {
 	float focalDistance;
 } Camera;
 
+uint wang_hash(uint seed)
+/*See http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/ */
+{
+    seed = (seed ^ 61) ^ (seed >> 16);
+    seed *= 9;
+    seed = seed ^ (seed >> 4);
+    seed *= 0x27d4eb2d;
+    seed = seed ^ (seed >> 15);
+    return seed;
+}
+
 static float get_random(unsigned int* seed0, unsigned int* seed1) {
 
 	/* hash the seeds using bitwise AND operations and bitshifts */
@@ -243,13 +254,20 @@ render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
 	__constant Sphere* spheres, const int width, const int height,
 	const int sphere_count, const int framenumber, __constant const Camera* cam,
-	float random0, float random1, const int hashedframenumber)
+	float random0, float random1)
 {
-	const int rendermode = 6;
+	const uint hashedframenumber = wang_hash(framenumber);
+	const int img_width = get_image_width(outputImage);
+    const int img_height = get_image_height(outputImage);
+
 	const int work_item_id = get_global_id(0);		/* the unique global id of the work item for the current pixel */
-	int x_coord = work_item_id % width;					/* x-coordinate of the pixel */
-	int y_coord = work_item_id / width;					/* y-coordinate of the pixel */
+	int x_coord = work_item_id % img_width;					/* x-coordinate of the pixel */
+	int y_coord = work_item_id / img_width;					/* y-coordinate of the pixel */
 	int2 pixel = (int2) (x_coord, y_coord);
+	int2 real_pixel = (int2) (x_coord, img_height-y_coord);
+
+	unsigned int seed0 = x_coord * framenumber % 1000 + (random0 * 100);
+	unsigned int seed1 = y_coord * framenumber % 1000 + (random1 * 100);
 
 	float fx = (float)x_coord / (float)width;  /* convert int in range [0 - width] to float in range [0-1] */
 	float fy = (float)y_coord / (float)height; /* convert int in range [0 - height] to float in range [0-1] */
@@ -257,45 +275,32 @@ render_kernel(
 	/*create a camera ray */
 	struct Ray camray = createCamRay_simple(x_coord, y_coord, width, height);
 
-	/* create and initialise a sphere */
-	struct Sphere sphere1;
-	sphere1 = spheres[1];
+	/* add the light contribution of each sample and average over all samples*/
+	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
+	float invSamples = 1.0f / SAMPLES;
 
-	/* intersect ray with sphere */
-	float t = intersect_sphere(&sphere1, &camray);
+	for (int i = 0; i < SAMPLES; i++)
+		finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1) * invSamples;
+
 
 	float4 colorf4 = (float4)(0.0f, 0.0f, 0.0f, 1.0f);
+	colorf4.x = finalcolor.x;
+	colorf4.y = finalcolor.y;
+	colorf4.z = finalcolor.z;
 
-	/* if ray misses sphere, return background colour 
-	background colour is a blue-ish gradient dependent on image height */
-	if (t < EPSILON && rendermode != 1){ 
-		colorf4 = (float4)(fy * 0.1f, fy * 0.3f, 0.3f, 1.0f);
+
+	if (reset == 1){
 		write_imagef(outputImage, pixel, colorf4);
-		return;
 	}
+	else{
+		float4 prev_color = read_imagef(inputImage, sampler, pixel);
+		int num_passes = prev_color.w;
 
-	/* for more interesting lighting: compute normal 
-	and cosine of angle between normal and ray direction */
-	float3 hitpoint = camray.origin + camray.dir * t;
-	float3 normal = normalize(hitpoint - sphere1.pos);
-	float cosine_factor = dot(normal, camray.dir) * -1.0f;
-	
-	float3 colorf3 = sphere1.color * cosine_factor;
-
-	/* six different rendermodes */
-	if (rendermode == 1) colorf3 = (float3)(fx, fy, 0); /* simple interpolated colour gradient based on pixel coordinates */
-	else if (rendermode == 2) colorf3 = sphere1.color;  /* raytraced sphere with plain colour */
-	else if (rendermode == 3) colorf3 = sphere1.color * cosine_factor; /* with cosine weighted colour */
-	else if (rendermode == 4) colorf3 = sphere1.color * cosine_factor * sin(80 * fy); /* with sinusoidal stripey pattern */
-	else if (rendermode == 5) colorf3 = sphere1.color * cosine_factor * sin(400 * fy) * sin(400 * fx); /* with grid pattern */
-	else colorf3 = normal * 0.5f + (float3)(0.5f, 0.5f, 0.5f); /* with normal colours */
-
-	colorf4.x = colorf3.x;
-	colorf4.y = colorf3.y;
-	colorf4.z = colorf3.z;
-	colorf4.x = 1.0f;
-
-	write_imagef(outputImage, pixel, colorf4);
+		colorf4 += (prev_color * num_passes);
+		colorf4 /= (num_passes + 1);
+		colorf4.w = num_passes + 1;
+		write_imagef(outputImage, pixel, colorf4);
+	}
 }
 
 //
@@ -303,8 +308,9 @@ __kernel void render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
 	__constant Sphere* spheres, const int width, const int height,
 	const int sphere_count, const int framenumber, __constant const Camera* cam,
-	float random0, float random1, const int hashedframenumber)
+	float random0, float random1)
 {
+	const uint hashedframenumber =  wang_hash(framenumber);
 	/*int img_width = get_image_width(outputImage);
 	int img_height = get_image_height(outputImage);*/
 	unsigned int work_item_id = get_global_id(0);	/* the unique global id of the work item for the current pixel */
