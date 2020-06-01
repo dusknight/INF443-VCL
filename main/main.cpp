@@ -229,6 +229,7 @@ void initOpenCL()
 	if (result) cout << "Error during compilation OpenCL code!!!\n (" << result << ")" << endl;
     // std::string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
     // std::cout << buildlog << endl;
+    std::cout << source.substr(10560) << endl;
 	if (result == CL_BUILD_PROGRAM_FAILURE || result == CL_INVALID_PROGRAM) {
 		// Get the build log
 		std::string name = device.getInfo<CL_DEVICE_NAME>();
@@ -245,7 +246,7 @@ void initOpenCL()
 void initScene(Sphere* cpu_spheres) {
 
     // floor
-    cpu_spheres[0].radius = 200.0f;
+    cpu_spheres[0].radius = 2.0f;
     cpu_spheres[0].position = Vector3Df(0.0f, -200.4f, 0.0f);
     cpu_spheres[0].color = Vector3Df(0.9f, 0.3f, 0.0f);
     cpu_spheres[0].emission = Vector3Df(0.0f, 0.0f, 0.0f);
@@ -779,13 +780,13 @@ int main()
         queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam);      
 
         // update params
-        // kernel.setArg(3, cl_spheres);  // in case that spheres move
+        kernel.setArg(3, cl_spheres);  // in case that spheres move
         //kernel.setArg(5, framenumber);
         //kernel.setArg(6, cl_camera);
         //kernel.setArg(7, rand());
         //kernel.setArg(8, rand());
         //kernel.setArg(10, WangHash(framenumber));
-        kernel.setArg(2, buffer_reset);
+        kernel.setArg(2, buffer_switch);
         kernel.setArg(7, framenumber);
         kernel.setArg(8, cl_camera);
         kernel.setArg(9, rand());
