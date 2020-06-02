@@ -360,7 +360,7 @@ void runKernel() {
         0, 0, window_width, window_height,
         0, 0, window_width, window_height,
         GL_COLOR_BUFFER_BIT,
-        GL_NEAREST); opengl_debug();
+        GL_LINEAR); opengl_debug();
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();  // back to default
     // glDrawBuffer(GL_BACK); opengl_debug();  // draw to back buffer, waiting for swap
 
