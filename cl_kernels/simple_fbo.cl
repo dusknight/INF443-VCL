@@ -188,8 +188,9 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 	float3 accum_color = (float3)(0.0f, 0.0f, 0.0f);
 	float3 mask = (float3)(1.0f, 1.0f, 1.0f);
-	int randSeed0 = seed0;
-	int randSeed1 = seed1;
+	int* randSeed0 = seed0;
+	int*
+		randSeed1 = seed1;
 
 	for (int bounces = 0; bounces < 8; bounces++) {
 
@@ -273,7 +274,7 @@ render_kernel(
 	float fy = (float)y_coord / (float)height; /* convert int in range [0 - height] to float in range [0-1] */
 
 	/*create a camera ray */
-	struct Ray camray = createCamRay_simple(x_coord, y_coord, width, height);
+	struct Ray camray = createCamRay(x_coord, y_coord, width, height, cam, &seed0, &seed1);
 
 	/* add the light contribution of each sample and average over all samples*/
 	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
@@ -307,7 +308,7 @@ render_kernel(
 __kernel void render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
 	__constant Sphere* spheres, const int width, const int height,
-	const int sphere_count, const int framenumber, __constant const Camera* cam,
+	const int sphere_count, const int framenumber, __read_only const Camera* cam,
 	float random0, float random1)
 {
 	const uint hashedframenumber =  wang_hash(framenumber);

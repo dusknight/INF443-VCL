@@ -72,6 +72,7 @@ Sphere cpu_spheres[sphere_count];
 cl_float4* cpu_output;
 int buffer_switch = 1;
 int buffer_reset = 0;
+int scene_changed = 0;
 
 
 void initOpenCL()
@@ -282,7 +283,7 @@ void initCLKernel() {
     kernel.setArg(5, window_height);
     kernel.setArg(6, sphere_count);
     kernel.setArg(7, framenumber);
-    kernel.setArg(8, cl_camera);
+    // kernel.setArg(8, cl_camera);
     kernel.setArg(9, rand());
     kernel.setArg(10, rand());
 }
@@ -302,6 +303,13 @@ void runKernel() {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  // default FBO for rendering
     glDrawBuffer(GL_BACK);
 
+    //if (scene_changed) {
+    //    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_ID);
+    //    glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    //    glClear(GL_COLOR_BUFFER_BIT);
+    //    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    //    glClear(GL_COLOR_BUFFER_BIT);
+    //}
     //Make sure OpenGL is done using the VBOs
     glFinish();
 
@@ -686,9 +694,12 @@ int main()
 	// initialise scene
 	initScene(cpu_spheres);
     interactiveCamera = new InteractiveCamera;
+    interactiveCamera->changeYaw(0.1);
 	cl_spheres = Buffer(context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
-	queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
-
+    cl_camera = Buffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(Camera), interactiveCamera);
+    // hostRendercam = (Camera*) queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
+    
+    // clEnqueueMapBuffer
 	// intitialise the kernel
 	initCLKernel();
 
@@ -699,8 +710,11 @@ int main()
 
     std::cout<<"*** Start GLFW animation loop ***"<<std::endl;
     vcl::glfw_fps_counter fps_counter;
+    hostRendercam = new Camera;
+    cl::Event ev_buffer;
     while( !glfwWindowShouldClose(gui.window) )
     {
+        if (scene_changed) buffer_reset = 1;
         opengl_debug();
 
         // Clear all color and zbuffer information before drawing on the screen
@@ -728,14 +742,18 @@ int main()
         framenumber++;
 
         // build a new camera for each frame on the CPU
-        hostRendercam = new Camera;
+        // interactiveCamera->changePitch(0.5);
+        // delete hostRendercam;
+        // hostRendercam = new Camera;
         interactiveCamera->buildRenderCamera(hostRendercam);
-        // copy the host camera to a OpenCL camera
-        queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam);      
+        queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam, 0);
 
-        // update params
-        buffer_reset = 0;
+        // copy the host camera to a OpenCL camera
         
+    
+        // queue.enqueueMapBuffer(cl_camera, CL_TRUE, CL_MAP_WRITE, 0, sizeof(Camera));
+        // update params
+
         kernel.setArg(2, buffer_reset);
         kernel.setArg(3, cl_spheres);  // in case that spheres move
         kernel.setArg(7, framenumber);
@@ -754,10 +772,10 @@ int main()
         vcl::imgui_render_frame(gui.window);
 
         update_fps_title(gui.window, gui.window_title, fps_counter);
-
+        buffer_reset = 0;
+        scene_changed = 0;
         glfwSwapBuffers(gui.window);
         glfwPollEvents();
-        opengl_debug();
 
     }
     std::cout<<"*** Stop GLFW loop ***"<<std::endl;
@@ -794,21 +812,41 @@ void mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    // scene_current.keyboard_input(scene, window, key, scancode, action, mods);
+    scene_current.keyboard_input(scene, window, key, scancode, action, mods);
     if (ImGui::GetIO().WantCaptureKeyboard)
         return;
     //GlfwManager* ptr = (GlfwManager*)glfwGetWindowUserPointer(window);
 
-    //if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        scene_changed = 1;
+        interactiveCamera->changePitch(0.1);
+    }
+
+        // cpu_spheres[1].position + Vector3Df(10, 0, 0);
     //    GlfwManager::cameraUpdateCallback(glm::vec4(0, 0, 1, 0), 0, 0);
 
-    //if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->changePitch(-0.1);
+        scene_changed = 1;
+    }
+        // interactiveCamera->changeAltitude(-0.5);
     //    cameraUpdateCallback(glm::vec4(0, 0, -1, 0), 0, 0);
 
-    //if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->changeYaw(-0.1); 
+        scene_changed = 1;
+    }
+
     //    cameraUpdateCallback(glm::vec4(-1, 0, 0, 0), 0, 0);
 
-    //if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->changeYaw(0.1); 
+        scene_changed = 1;
+    }
     //    cameraUpdateCallback(glm::vec4(1, 0, 0, 0), 0, 0);
 
     //if (key == GLFW_KEY_HOME && (action == GLFW_PRESS || action == GLFW_REPEAT))
