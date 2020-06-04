@@ -145,19 +145,21 @@ void initOpenCL()
 	// Convert the OpenCL source code to a string// Convert the OpenCL source code to a string
 	string source;
 	ifstream file("../../../cl_kernels/simple_fbo.cl");
+    streamoff len;
 	if (!file) {
 		cout << "\nNo OpenCL file found!" << endl << "Exiting..." << endl;
 		system("PAUSE");
 		exit(1);
 	}
-	while (!file.eof()) {
-		char line[256];
-		file.getline(line, 255);
-		source += line;
-	}
+
+    file.seekg(0, ios::end);
+    len = file.tellg();
+    file.seekg(0, ios::beg);
+    source.resize(len);
+    file.read(&source[0], len);
+    cout << "[INFO] CL source read successfully." << endl;
 
 	const char* kernel_source = source.c_str();
-    // std::cout << source.substr(8742) << endl;
 	// Create an OpenCL program with source
 	program = Program(context, kernel_source);
 
@@ -166,7 +168,6 @@ void initOpenCL()
 	if (result) cout << "Error during compilation OpenCL code!!!\n (" << result << ")" << endl;
     // std::string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
     // std::cout << buildlog << endl;
-    // std::cout << source.substr(10560) << endl;
 	if (result == CL_BUILD_PROGRAM_FAILURE || result == CL_INVALID_PROGRAM) {
 		// Get the build log
 		std::string name = device.getInfo<CL_DEVICE_NAME>();
@@ -179,61 +180,7 @@ void initOpenCL()
 }
 
 void initScene(Sphere* cpu_spheres) {
-
-    //// left wall
-    //cpu_spheres[0].radius = 200.0f;
-    //cpu_spheres[0].position = Vector3Df(-200.6f, 0.0f, 0.0f);
-    //cpu_spheres[0].color = Vector3Df(0.75f, 0.25f, 0.25f);
-    //cpu_spheres[0].emission = Vector3Df(0.0f, 0.0f, 0.0f);
-
-    //// right wall
-    //cpu_spheres[1].radius = 200.0f;
-    //cpu_spheres[1].position = Vector3Df(200.6f, 0.0f, 0.0f);
-    //cpu_spheres[1].color = Vector3Df(0.25f, 0.25f, 0.75f);
-    //cpu_spheres[1].emission = Vector3Df(0.0f, 0.0f, 0.0f);
-
-    //// floor
-    //cpu_spheres[2].radius = 200.0f;
-    //cpu_spheres[2].position = Vector3Df(0.0f, -200.4f, 0.0f);
-    //cpu_spheres[2].color = Vector3Df(0.9f, 0.8f, 0.7f);
-    //cpu_spheres[2].emission = Vector3Df(0.0f, 0.0f, 0.0f);
-
-    //// ceiling
-    //cpu_spheres[3].radius = 200.0f;
-    //cpu_spheres[3].position = Vector3Df(0.0f, 200.4f, 0.0f);
-    //cpu_spheres[3].color = Vector3Df(0.9f, 0.8f, 0.7f);
-    //cpu_spheres[3].emission = Vector3Df(0.0f, 0.0f, 0.0f);
-
-    //// back wall
-    //cpu_spheres[4].radius = 200.0f;
-    //cpu_spheres[4].position = Vector3Df(0.0f, 0.0f, -200.4f);
-    //cpu_spheres[4].color = Vector3Df(0.9f, 0.8f, 0.7f);
-    //cpu_spheres[4].emission = Vector3Df(0.0f, 0.0f, 0.0f);
-
-    //// front wall 
-    //cpu_spheres[5].radius = 200.0f;
-    //cpu_spheres[5].position = Vector3Df(0.0f, 0.0f, 202.0f);
-    //cpu_spheres[5].color = Vector3Df(0.9f, 0.8f, 0.7f);
-    //cpu_spheres[5].emission = Vector3Df(0.0f, 0.0f, 0.0f);
-
-    //// left sphere
-    //cpu_spheres[6].radius = 0.16f;
-    //cpu_spheres[6].position = Vector3Df(-0.25f, -0.24f, -0.1f);
-    //cpu_spheres[6].color = Vector3Df(0.9f, 0.8f, 0.7f);
-    //cpu_spheres[6].emission = Vector3Df(0.0f, 0.0f, 0.0f);
-
-    //// right sphere
-    //cpu_spheres[7].radius = 0.16f;
-    //cpu_spheres[7].position = Vector3Df(0.25f, -0.24f, 0.1f);
-    //cpu_spheres[7].color = Vector3Df(0.9f, 0.8f, 0.7f);
-    //cpu_spheres[7].emission = Vector3Df(0.0f, 0.0f, 0.0f);
-
-    //// lightsource
-    //cpu_spheres[8].radius = 1.0f;
-    //cpu_spheres[8].position = Vector3Df(0.0f, 1.36f, 0.0f);
-    //cpu_spheres[8].color = Vector3Df(0.0f, 0.0f, 0.0f);
-    //cpu_spheres[8].emission = Vector3Df(9.0f, 8.0f, 6.0f);
-        // floor
+     // floor
     cpu_spheres[0].radius = 200.0f;
     cpu_spheres[0].position = Vector3Df(0.0f, -200.4f, 0.0f);
     cpu_spheres[0].color = Vector3Df(0.9f, 0.3f, 0.0f);
@@ -488,163 +435,8 @@ void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int acti
 // Start program
 // ************************************** //
 
-// test
 
-void setup_dev(cl_context_properties* properties, cl_device_id device_id, cl_platform_id platform_id) {
-    // Load extension
-    clGetGLContextInfoKHR_fn clGetGLContextInfoKHR = NULL;
 
-#if CL_TARGET_OPENCL_VERSION > 110
-    clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddressForPlatform(platform_id, "clGetGLContextInfoKHR");
-#else
-    clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddress("clGetGLContextInfoKHR");
-#endif
-    if (!clGetGLContextInfoKHR)
-        throw std::runtime_error("\"clGetGLContextInfoKHR\" Function failed to load.");
-
-    // err = clGetGLContextInfoKHR(properties, CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR, sizeof(cl_device_id), &device_id, &num_devices);
-}
-
-int test_cl()
-{
-    // Find all available OpenCL platforms (e.g. AMD, Nvidia, Intel)
-    vector<Platform> platforms;
-    Platform::get(&platforms);
-
-    // Show the names of all available OpenCL platforms
-    cout << "Available OpenCL platforms: \n\n";
-    for (unsigned int i = 0; i < platforms.size(); i++)
-        cout << "\t" << i + 1 << ": " << platforms[i].getInfo<CL_PLATFORM_NAME>() << endl;
-
-    // Choose and create an OpenCL platform
-    cout << endl << "Enter the number of the OpenCL platform you want to use: ";
-    unsigned int input = 0;
-    cin >> input;
-    // Handle incorrect user input
-    while (input < 1 || input > platforms.size()) {
-        cin.clear(); //clear errors/bad flags on cin
-        cin.ignore(cin.rdbuf()->in_avail(), '\n'); // ignores exact number of chars in cin buffer
-        cout << "No such platform." << endl << "Enter the number of the OpenCL platform you want to use: ";
-        cin >> input;
-    }
-
-    Platform platform = platforms[input - 1];
-
-    // Print the name of chosen OpenCL platform
-    cout << "Using OpenCL platform: \t" << platform.getInfo<CL_PLATFORM_NAME>() << endl;
-
-    // Find all available OpenCL devices (e.g. CPU, GPU or integrated GPU)
-    vector<Device> devices;
-    platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
-
-    // Print the names of all available OpenCL devices on the chosen platform
-    cout << "Available OpenCL devices on this platform: " << endl << endl;
-    for (unsigned int i = 0; i < devices.size(); i++)
-        cout << "\t" << i + 1 << ": " << devices[i].getInfo<CL_DEVICE_NAME>() << endl;
-
-    // Choose an OpenCL device 
-    cout << endl << "Enter the number of the OpenCL device you want to use: ";
-    input = 0;
-    cin >> input;
-    // Handle incorrect user input
-    while (input < 1 || input > devices.size()) {
-        cin.clear(); //clear errors/bad flags on cin
-        cin.ignore(cin.rdbuf()->in_avail(), '\n'); // ignores exact number of chars in cin buffer
-        cout << "No such device. Enter the number of the OpenCL device you want to use: ";
-        cin >> input;
-    }
-
-    Device device = devices[input - 1];
-
-    // Print the name of the chosen OpenCL device
-    cout << endl << "Using OpenCL device: \t" << device.getInfo<CL_DEVICE_NAME>() << endl << endl;
-
-    // Create an OpenCL context on that device.
-    // the context manages all the OpenCL resources 
-    static cl_context_properties properties[] =
-    {
-        CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
-        CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
-        CL_CONTEXT_PLATFORM, (cl_context_properties)platform(),
-        0
-    };
-
-    setup_dev(properties, device(), platform());
-    Context context = Context(device, properties);
-
-    ///////////////////
-    // OPENCL KERNEL //
-    ///////////////////
-
-    // the OpenCL kernel in this tutorial is a simple program that adds two float arrays in parallel  
-    // the source code of the OpenCL kernel is passed as a string to the host
-    // the "__global" keyword denotes that "global" device memory is used, which can be read and written 
-    // to by all work items (threads) and all work groups on the device and can also be read/written by the host (CPU)
-
-    const char* source_string =
-        " __kernel void parallel_add(__global float* x, __global float* y, __global float* z){ "
-        " const int i = get_global_id(0); " // get a unique number identifying the work item in the global pool
-        " z[i] = y[i] + x[i];    " // add two arrays 
-        "}";
-
-    // Create an OpenCL program by performing runtime source compilation
-    Program program = Program(context, source_string);
-
-    // Build the program and check for compilation errors 
-    cl_int result = program.build({ device }, "");
-    if (result) cout << "Error during compilation! (" << result << ")" << endl;
-
-    // Create a kernel (entry point in the OpenCL source program)
-    // kernels are the basic units of executable code that run on the OpenCL device
-    // the kernel forms the starting point into the OpenCL program, analogous to main() in CPU code
-    // kernels can be called from the host (CPU)
-    Kernel kernel = Kernel(program, "parallel_add");
-
-    // Create input data arrays on the host (= CPU)
-    const int numElements = 10;
-    float cpuArrayA[numElements] = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f };
-    float cpuArrayB[numElements] = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f };
-    float cpuOutput[numElements] = {}; // empty array for storing the results of the OpenCL program
-
-    // Create buffers (memory objects) on the OpenCL device, allocate memory and copy input data to device.
-    // Flags indicate how the buffer should be used e.g. read-only, write-only, read-write
-    Buffer clBufferA = Buffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, numElements * sizeof(cl_int), cpuArrayA);
-    Buffer clBufferB = Buffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, numElements * sizeof(cl_int), cpuArrayB);
-    Buffer clOutput = Buffer(context, CL_MEM_WRITE_ONLY, numElements * sizeof(cl_int), NULL);
-
-    // Specify the arguments for the OpenCL kernel
-    // (the arguments are __global float* x, __global float* y and __global float* z)
-    kernel.setArg(0, clBufferA); // first argument 
-    kernel.setArg(1, clBufferB); // second argument 
-    kernel.setArg(2, clOutput);  // third argument 
-
-    // Create a command queue for the OpenCL device
-    // the command queue allows kernel execution commands to be sent to the device
-    CommandQueue queue = CommandQueue(context, device);
-
-    // Determine the global and local number of "work items"
-    // The global work size is the total number of work items (threads) that execute in parallel
-    // Work items executing together on the same compute unit are grouped into "work groups"
-    // The local work size defines the number of work items in each work group
-    // Important: global_work_size must be an integer multiple of local_work_size 
-    std::size_t global_work_size = numElements;
-    std::size_t local_work_size = 10; // could also be 1, 2 or 5 in this example
-    // when local_work_size equals 10, all ten number pairs from both arrays will be added together in one go
-
-    // Launch the kernel and specify the global and local number of work items (threads)
-    queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size);
-
-    // Read and copy OpenCL output to CPU 
-    // the "CL_TRUE" flag blocks the read operation until all work items have finished their computation
-    queue.enqueueReadBuffer(clOutput, CL_TRUE, 0, numElements * sizeof(cl_float), cpuOutput);
-
-    // Print results to console
-    for (int i = 0; i < numElements; i++)
-        cout << cpuArrayA[i] << " + " << cpuArrayB[i] << " = " << cpuOutput[i] << endl;
-
-    system("PAUSE");
-    return 0;
-}
 
 int main()
 {

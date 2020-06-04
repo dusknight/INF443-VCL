@@ -33,15 +33,33 @@ typedef struct Camera {
 	float focalDistance;
 } Camera;
 
+typedef struct AABB {
+	float4 p_min;
+	float4 p_max;
+}AABB;
+
+typedef struct BVHGPU {
+	AABB aabb;          //32 
+	int vert_list[10]; //40
+	int child_idx;      //4
+	int vert_len;       //4 - total 80
+} BVHNodeGPU;
+
+typedef struct Camera {
+	Mat4x4 view_mat;
+	float view_plane_dist;  // total 68 bytes
+	float pad[3];           // 12 bytes padding to reach 80 (next multiple of 16)
+} Camera;
+
 uint wang_hash(uint seed)
 /*See http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/ */
 {
-    seed = (seed ^ 61) ^ (seed >> 16);
-    seed *= 9;
-    seed = seed ^ (seed >> 4);
-    seed *= 0x27d4eb2d;
-    seed = seed ^ (seed >> 15);
-    return seed;
+	seed = (seed ^ 61) ^ (seed >> 16);
+	seed *= 9;
+	seed = seed ^ (seed >> 4);
+	seed *= 0x27d4eb2d;
+	seed = seed ^ (seed >> 15);
+	return seed;
 }
 
 static float get_random(unsigned int* seed0, unsigned int* seed1) {
@@ -113,7 +131,7 @@ Ray createCamRay(const int x_coord, const int y_coord, const int width, const in
 	return ray;
 }
 
-struct Ray createCamRay_simple(const int x_coord, const int y_coord, const int width, const int height){
+struct Ray createCamRay_simple(const int x_coord, const int y_coord, const int width, const int height) {
 
 	float fx = (float)x_coord / (float)width;  /* convert int in range [0 - width] to float in range [0-1] */
 	float fy = (float)y_coord / (float)height; /* convert int in range [0 - height] to float in range [0-1] */
@@ -249,7 +267,7 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 union Colour { float c; uchar4 components; };
 
-__kernel void 
+__kernel void
 /*render_kernel(__global float3* output, int width, int height, int rendermode)*/
 render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
@@ -259,13 +277,13 @@ render_kernel(
 {
 	const uint hashedframenumber = wang_hash(framenumber);
 	const int img_width = get_image_width(outputImage);
-    const int img_height = get_image_height(outputImage);
+	const int img_height = get_image_height(outputImage);
 
 	const int work_item_id = get_global_id(0);		/* the unique global id of the work item for the current pixel */
 	int x_coord = work_item_id % img_width;					/* x-coordinate of the pixel */
 	int y_coord = work_item_id / img_width;					/* y-coordinate of the pixel */
 	int2 pixel = (int2) (x_coord, y_coord);
-	int2 real_pixel = (int2) (x_coord, img_height-y_coord);
+	int2 real_pixel = (int2) (x_coord, img_height - y_coord);
 
 	unsigned int seed0 = x_coord * framenumber % 1000 + (random0 * 100);
 	unsigned int seed1 = y_coord * framenumber % 1000 + (random1 * 100);
@@ -290,10 +308,10 @@ render_kernel(
 	colorf4.z = finalcolor.z;
 
 
-	if (reset == 1){
+	if (reset == 1) {
 		write_imagef(outputImage, pixel, colorf4);
 	}
-	else{
+	else {
 		float4 prev_color = read_imagef(inputImage, sampler, pixel);
 		int num_passes = prev_color.w;
 
@@ -305,66 +323,66 @@ render_kernel(
 }
 
 //
-//__kernel void render_kernel(
-//	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
-//	__constant Sphere* spheres, const int width, const int height,
-//	const int sphere_count, const int framenumber, __read_only const Camera* cam,
-//	float random0, float random1)
-//{
-//	const uint hashedframenumber =  wang_hash(framenumber);
-//	/*int img_width = get_image_width(outputImage);
-//	int img_height = get_image_height(outputImage);*/
-//	unsigned int work_item_id = get_global_id(0);	/* the unique global id of the work item for the current pixel */
-//	unsigned int x_coord = work_item_id % width;			/* x-coordinate of the pixel */
-//	unsigned int y_coord = work_item_id / width;			/* y-coordinate of the pixel */
-//	int2 pixel = (int2) (x_coord, y_coord);
-//	/* seeds for random number generator */
-//
-//	unsigned int seed0 = x_coord * framenumber % 1000 + (random0 * 100);
-//	unsigned int seed1 = y_coord * framenumber % 1000 + (random1 * 100);
-//
-//
-//	/* add the light contribution of each sample and average over all samples*/
-//	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
-//	float invSamples = 1.0f / SAMPLES;
-//
-//	for (unsigned int i = 0; i < SAMPLES; i++) {
-//		Ray camray = createCamRay(x_coord, y_coord, width, height, cam, &seed0, &seed1);
-//		finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1) * invSamples;
-//	}
-//
-//	/* add pixel colour to accumulation buffer (accumulates all samples) */
-//	/* inputImage[work_item_id] += finalcolor;*/
-//	/* averaged colour: divide colour by the number of calculated frames so far */
-//
-//	/*union Colour fcolor;
-//	fcolor.components = (uchar4)(
-//		(unsigned char)(tempcolor.x * 255),
-//		(unsigned char)(tempcolor.y * 255),
-//		(unsigned char)(tempcolor.z * 255),
-//		1);*/
-//
-//	/* store the pixelcolour in the output buffer */
-//	/* output[work_item_id] = (float3)(x_coord, y_coord, fcolor.c);*/
-//	float4 colorf4 = (float4)(0.0f, 0.0f, 0.0f, 1.0f);
-//	colorf4.x = finalcolor.x;
-//	colorf4.y = finalcolor.y;
-//	colorf4.z = finalcolor.z;
-//	
-//	if (reset == 1)
-//	{
-//		if(x_coord < 100 || x_coord > 800) colorf4 = (float4)((float)seed0 / 1000, 0.0f, 0.0f, 1.0f);
-//		write_imagef(outputImage, pixel, colorf4);
-//	}
-//	else
-//	{
-//		float4 prev_color = read_imagef(inputImage, sampler, pixel);
-//		int num_passes = prev_color.w;
-//
-//		colorf4 += (prev_color * num_passes);
-//		colorf4 /= (num_passes + 1);
-//		colorf4.w = num_passes + 1;
-//		if(x_coord < 100 || x_coord > 800) colorf4 = (float4)(0.0f, (float)seed0 / 1000, 0.0f, 1.0f);
-//		write_imagef(outputImage, pixel, colorf4);
-//	}
-//}
+__kernel void render_kernel(
+	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
+	__constant Sphere* spheres, const int width, const int height,
+	const int sphere_count, const int framenumber, __read_only const Camera* cam,
+	float random0, float random1)
+{
+	const uint hashedframenumber = wang_hash(framenumber);
+	/*int img_width = get_image_width(outputImage);
+	int img_height = get_image_height(outputImage);*/
+	unsigned int work_item_id = get_global_id(0);	/* the unique global id of the work item for the current pixel */
+	unsigned int x_coord = work_item_id % width;			/* x-coordinate of the pixel */
+	unsigned int y_coord = work_item_id / width;			/* y-coordinate of the pixel */
+	int2 pixel = (int2) (x_coord, y_coord);
+	/* seeds for random number generator */
+
+	unsigned int seed0 = x_coord * framenumber % 1000 + (random0 * 100);
+	unsigned int seed1 = y_coord * framenumber % 1000 + (random1 * 100);
+
+
+	/* add the light contribution of each sample and average over all samples*/
+	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
+	float invSamples = 1.0f / SAMPLES;
+
+	for (unsigned int i = 0; i < SAMPLES; i++) {
+		Ray camray = createCamRay(x_coord, y_coord, width, height, cam, &seed0, &seed1);
+		finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1) * invSamples;
+	}
+
+	/* add pixel colour to accumulation buffer (accumulates all samples) */
+	/* inputImage[work_item_id] += finalcolor;*/
+	/* averaged colour: divide colour by the number of calculated frames so far */
+
+	/*union Colour fcolor;
+	fcolor.components = (uchar4)(
+		(unsigned char)(tempcolor.x * 255),
+		(unsigned char)(tempcolor.y * 255),
+		(unsigned char)(tempcolor.z * 255),
+		1);*/
+
+		/* store the pixelcolour in the output buffer */
+		/* output[work_item_id] = (float3)(x_coord, y_coord, fcolor.c);*/
+	float4 colorf4 = (float4)(0.0f, 0.0f, 0.0f, 1.0f);
+	colorf4.x = finalcolor.x;
+	colorf4.y = finalcolor.y;
+	colorf4.z = finalcolor.z;
+
+	if (reset == 1)
+	{
+		if (x_coord < 100 || x_coord > 800) colorf4 = (float4)((float)seed0 / 1000, 0.0f, 0.0f, 1.0f);
+		write_imagef(outputImage, pixel, colorf4);
+	}
+	else
+	{
+		float4 prev_color = read_imagef(inputImage, sampler, pixel);
+		int num_passes = prev_color.w;
+
+		colorf4 += (prev_color * num_passes);
+		colorf4 /= (num_passes + 1);
+		colorf4.w = num_passes + 1;
+		if (x_coord < 100 || x_coord > 800) colorf4 = (float4)(0.0f, (float)seed0 / 1000, 0.0f, 1.0f);
+		write_imagef(outputImage, pixel, colorf4);
+	}
+}
