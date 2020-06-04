@@ -11,6 +11,9 @@ __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
 CLK_ADDRESS_CLAMP_TO_EDGE |
 CLK_FILTER_NEAREST;
 
+//
+//***************** DATA STRUCT ******************** //
+//
 typedef struct Ray {
 	float3 origin;
 	float3 dir;
@@ -33,6 +36,14 @@ typedef struct Camera {
 	float focalDistance;
 } Camera;
 
+typedef struct HitInfo {
+
+	int  triangle_ID, light_ID;
+	float4 hit_point;  // point of intersection.
+	float4 normal;
+
+} HitInfo;
+
 typedef struct AABB {
 	float4 p_min;
 	float4 p_max;
@@ -43,13 +54,27 @@ typedef struct BVHGPU {
 	int vert_list[10]; //40
 	int child_idx;      //4
 	int vert_len;       //4 - total 80
-} BVHNodeGPU;
+} BVHGPU;
 
-typedef struct Camera {
-	Mat4x4 view_mat;
-	float view_plane_dist;  // total 68 bytes
-	float pad[3];           // 12 bytes padding to reach 80 (next multiple of 16)
-} Camera;
+typedef struct Triangle {
+
+	float4 v1;
+	float4 v2;
+	float4 v3;
+	float4 vn1;
+	float4 vn2;
+	float4 vn3;
+	int matID;       // total size till here = 100 bytes
+	float pad[3];    // padding 12 bytes - to make it 112 bytes (next multiple of 16
+} Triangle;
+//typedef struct Camera {
+//	Mat4x4 view_mat;
+//	float view_plane_dist;  // total 68 bytes
+//	float pad[3];           // 12 bytes padding to reach 80 (next multiple of 16)
+//} Camera;
+
+// ************* HELPER FUNC ****************** //
+//
 
 uint wang_hash(uint seed)
 /*See http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/ */
@@ -79,6 +104,9 @@ static float get_random(unsigned int* seed0, unsigned int* seed1) {
 	res.ui = (ires & 0x007fffff) | 0x40000000;  /* bitwise AND, bitwise OR */
 	return (res.f - 2.0f) / 2.0f;
 }
+
+// ******************** PATH TRACING ***********************
+//
 
 Ray createCamRay(const int x_coord, const int y_coord, const int width, const int height, __constant Camera* cam, const int* seed0, const int* seed1) {
 
@@ -131,26 +159,6 @@ Ray createCamRay(const int x_coord, const int y_coord, const int width, const in
 	return ray;
 }
 
-struct Ray createCamRay_simple(const int x_coord, const int y_coord, const int width, const int height) {
-
-	float fx = (float)x_coord / (float)width;  /* convert int in range [0 - width] to float in range [0-1] */
-	float fy = (float)y_coord / (float)height; /* convert int in range [0 - height] to float in range [0-1] */
-
-	/* calculate aspect ratio */
-	float aspect_ratio = (float)(width) / (float)(height);
-	float fx2 = (fx - 0.5f) * aspect_ratio;
-	float fy2 = fy - 0.5f;
-
-	/* determine position of pixel on screen */
-	float3 pixel_pos = (float3)(fx2, -fy2, 0.0f);
-
-	/* create camera ray*/
-	struct Ray ray;
-	ray.origin = (float3)(0.0f, 0.0f, 40.0f); /* fixed camera position */
-	ray.dir = normalize(pixel_pos - ray.origin); /* ray direction is vector from camera to pixel */
-
-	return ray;
-}
 
 /* (__global Sphere* sphere, const Ray* ray) */
 float intersect_sphere(const Sphere* sphere, const Ray* ray) /* version using local copy of sphere */
@@ -264,6 +272,203 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 	return accum_color;
 }
+
+bool rayTriangleIntersection(Ray* ray, HitInfo* hit, __global Triangle* scene_data, int idx);
+bool rayAabbIntersection(Ray* ray, AABB bb);
+bool traverseBVH(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, __global Triangle* scene_data);
+bool traceRay(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, int scene_size, __global Triangle* scene_data);
+
+bool traceRay(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, int scene_size, __global Triangle* scene_data)
+{
+	bool flag = false;
+
+	for (int i = 0; i < LIGHT_SIZE; i++)
+	{
+		float DdotN = dot(ray->dir, light_sources[i].normal);
+		if (fabs(DdotN) > 0.0001)
+		{
+			float t = dot(light_sources[i].normal, light_sources[i].pos - ray->origin) / DdotN;
+			if (t > 0.0 && t < ray->length)
+			{
+				float proj1, proj2, la, lb;
+				float4 temp;
+
+				temp = ray->origin + (ray->dir * t);
+				temp = temp - light_sources[i].pos;
+				proj1 = dot(temp, light_sources[i].edge_l);
+				proj2 = dot(temp, light_sources[i].edge_w);
+				la = length(light_sources[i].edge_l);
+				lb = length(light_sources[i].edge_w);
+
+				// Projection of the vector from rectangle corner to hitpoint on the edges.
+				proj1 /= la;
+				proj2 /= lb;
+
+				if ((proj1 >= 0.0 && proj2 >= 0.0) && (proj1 <= la && proj2 <= lb))
+				{
+					ray->length = t;
+					hit->hit_point = ray->origin + (ray->dir * t);
+					hit->light_ID = i;
+					hit->triangle_ID = -1;
+					flag = true;
+				}
+			}
+		}
+	}
+	//Traverse BVH if present, else brute force intersect all triangles...
+	if (bvh_size > 0)
+		flag |= traverseBVH(ray, hit, bvh_size, bvh, scene_data);
+	else
+	{
+		for (int i = 0; i < scene_size; i++)
+			flag |= rayTriangleIntersection(ray, hit, scene_data, i);
+	}
+	return flag;
+}
+
+bool traverseBVH(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, __global Triangle* scene_data)
+{
+	int candidate_list[HEAP_SIZE];
+	candidate_list[0] = 0;
+	int len = 1;
+	bool intersect = false;
+
+	if (!rayAabbIntersection(ray, bvh[0].aabb))
+		return intersect;
+
+	for (int i = 0; i < len && len < HEAP_SIZE; i++)
+	{
+		float c_idx = bvh[candidate_list[i]].child_idx;
+		if (c_idx == -1 && bvh[candidate_list[i]].vert_len > 0)
+		{
+			for (int j = 0; j < bvh[candidate_list[i]].vert_len; j++)
+			{
+				intersect |= rayTriangleIntersection(ray, hit, scene_data, bvh[candidate_list[i]].vert_list[j]);
+				//If shadow ray don't need to compute further intersections...
+				if (ray->is_shadow_ray && intersect)
+					return true;
+			}
+			continue;
+		}
+
+		for (int j = c_idx; j < c_idx + 2; j++)
+		{
+			AABB bb = { bvh[j].aabb.p_min, bvh[j].aabb.p_max };
+			if ((bvh[j].vert_len > 0 || bvh[j].child_idx > 0) && rayAabbIntersection(ray, bb))
+			{
+				candidate_list[len] = j;
+				len++;
+			}
+		}
+	}
+	return intersect;
+}
+
+bool rayTriangleIntersection(Ray* ray, HitInfo* hit, __global Triangle* scene_data, int idx)
+{
+	float4 v1v2 = scene_data[idx].v2 - scene_data[idx].v1;
+	float4 v1v3 = scene_data[idx].v3 - scene_data[idx].v1;
+
+	float4 pvec = cross(ray->dir, v1v3);
+	float det = dot(v1v2, pvec);
+
+	float inv_det = 1.0f / det;
+	float4 dist = ray->origin - scene_data[idx].v1;
+	float u = dot(pvec, dist) * inv_det;
+
+	if (u < 0.0 || u > 1.0f)
+		return false;
+
+	float4 qvec = cross(dist, v1v2);
+	float v = dot(qvec, ray->dir) * inv_det;
+
+	if (v < 0.0 || u + v > 1.0)
+		return false;
+
+	float t = dot(v1v3, qvec) * inv_det;
+
+	//BackFace Culling Algo
+	/*
+	if(det < EPSILON)
+		continue;
+
+	float4 dist = ray->origin - scene_data[idx].v1;
+	float u = dot(pvec, dist);
+
+	if(u < 0.0 || u > det)
+		continue;
+
+	float4 qvec = cross(dist, v1v2);
+	float v = dot(qvec, ray->dir);
+
+	if(v < 0.0 || u+v > det)
+		continue;
+
+	float t = dot(v1v3, qvec);
+
+	float inv_det = 1.0f/det;
+	t *= inv_det;
+	u *= inv_det;
+	v *= inv_det;*/
+
+	if (t > 0 && t < ray->length)
+	{
+		ray->length = t;
+
+		float4 N1 = normalize(scene_data[idx].vn1);
+		float4 N2 = normalize(scene_data[idx].vn2);
+		float4 N3 = normalize(scene_data[idx].vn3);
+
+		float w = 1 - u - v;
+		hit->hit_point = ray->origin + ray->dir * t;
+		hit->normal = normalize(N1 * w + N2 * u + N3 * v);
+
+		hit->triangle_ID = idx;
+		hit->light_ID = -1;
+		return true;
+	}
+	return false;
+}
+
+bool rayAabbIntersection(Ray* ray, AABB bb)
+{
+	float t_max = INFINITY, t_min = -INFINITY;
+	float3 dir_inv = 1 / ray->dir.xyz;
+
+	float3 min_diff = (bb.p_min - ray->origin).xyz * dir_inv;
+	float3 max_diff = (bb.p_max - ray->origin).xyz * dir_inv;
+
+	if (!isnan(min_diff.x))
+	{
+		t_min = fmax(min(min_diff.x, max_diff.x), t_min);
+		t_max = min(fmax(min_diff.x, max_diff.x), t_max);
+	}
+
+	if (!isnan(min_diff.y))
+	{
+		t_min = fmax(min(min_diff.y, max_diff.y), t_min);
+		t_max = min(fmax(min_diff.y, max_diff.y), t_max);
+	}
+	if (t_max < t_min)
+		return false;
+
+	if (!isnan(min_diff.z))
+	{
+		t_min = fmax(min(min_diff.z, max_diff.z), t_min);
+		t_max = min(fmax(min_diff.z, max_diff.z), t_max);
+	}
+	return (t_max > fmax(t_min, 0.0f));
+}
+
+
+
+
+
+
+
+
+
+
 
 union Colour { float c; uchar4 components; };
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "linear_algebra.h"
+#include "cl_ext/linear_algebra.h"
 
 // padding with dummy variables are required for memory alignment
 // float3 is considered as float4 by OpenCL

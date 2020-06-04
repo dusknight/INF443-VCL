@@ -1,19 +1,46 @@
 #pragma once
 
-#include "linear_algebra.h"
+// #include "linear_algebra.h"
+#include "vcl/math/math.hpp"
 
 #define M_PI 3.14156265
 #define PI_OVER_TWO 1.5707963267948966192313216916397514420985
 
+#ifndef CL_MINIMUM_OPENCL_VERSION
+#define CL_MINIMUM_OPENCL_VERSION 120
+#endif // CL_MINIMUM_OPENCL_VERSION
+
+#ifndef CL_TARGET_OPENCL_VERSION
+#define CL_TARGET_OPENCL_VERSION 120
+#endif // CL_TARGET_OPENCL_VERSION
+
+#if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenCL/opencl.h>
+#include <OpenGL/OpenGL.h>
+#define CL_GL_SHARING_EXT "cl_apple_gl_sharing"
+
+#else
+#if defined (__linux)
+#include <GL/glx.h>
+#elif defined( __WIN32 )
+#include <windows.h>
+#endif // (__linux)
+
+#include <CL/cl.h>
+#include <CL/cl_gl.h>
+#define CL_GL_SHARING_EXT "cl_khr_gl_sharing"
+#endif // if defined(__APPLE__) || defined(__MACOSX)
+
+
 // Camera struct, used to store interactive camera data, copied to the GPU and used by OpenCL for each frame
 struct Camera {
-	Vector3Df position;		// 16 bytes
-	Vector3Df view;			// 16
-	Vector3Df up;			// 16
-	Vector2Df resolution;	// 8
-	Vector2Df fov;			// 8
-	float apertureRadius;	// 4
-	float focalDistance;	// 4
+	cl_float3 position;		// 16 bytes
+	cl_float3 view;			// 16
+	cl_float3 up;			// 16
+	cl_float2 resolution;	// 8
+	cl_float2 fov;			// 8
+	cl_float apertureRadius;	// 4
+	cl_float focalDistance;	// 4
 	//float dummy1;		// 4
 	//float dummy2;		// 4
 };
@@ -23,8 +50,8 @@ class InteractiveCamera
 {
 private:
 
-	Vector3Df centerPosition;
-	Vector3Df viewDirection;
+	vcl::vec3 centerPosition;
+	vcl::vec3 viewDirection;
 	float yaw;
 	float pitch;
 	float radius;
@@ -54,6 +81,6 @@ public:
 
 	void buildRenderCamera(Camera* renderCamera);
 
-	Vector2Df resolution;
-	Vector2Df fov;
+	vcl::vec2 resolution;
+	vcl::vec2 fov;
 };

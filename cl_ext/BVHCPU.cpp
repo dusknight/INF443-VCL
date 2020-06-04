@@ -1,4 +1,4 @@
-#include "BVHCPU.h"
+#include "cl_ext/BVHCPU.h"
 
 BVHCPU::BVHCPU()
 {

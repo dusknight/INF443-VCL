@@ -1,17 +1,17 @@
-#include "camera.h"
-
+#include "cl_ext/camera.h"
+#include "cl_ext/cl_convert.h"
 // constructor and default values
 InteractiveCamera::InteractiveCamera()
 {
-	centerPosition = Vector3Df(0, 0, 0);
+	centerPosition = vcl::vec3(0, 0, 0);
 	yaw = 0;
 	pitch = 0.3;
 	radius = 4;
 	apertureRadius = 0.01; // 0.04
 	focalDistance = 4.0f;
 
-	resolution = Vector2Df(512, 512);  // width, height
-	fov = Vector2Df(40, 40);
+	resolution = vcl::vec2(512, 512);  // width, height
+	fov = vcl::vec2(40, 40);
 }
 
 InteractiveCamera::~InteractiveCamera() {}
@@ -41,7 +41,7 @@ void InteractiveCamera::goForward(float m) {
 }
 
 void InteractiveCamera::strafe(float m) {
-	Vector3Df strafeAxis = cross(viewDirection, Vector3Df(0, 1, 0));
+	vcl::vec3 strafeAxis = cross(viewDirection, vcl::vec3(0, 1, 0));
 	strafeAxis.normalize();
 	centerPosition += strafeAxis * m;
 }
@@ -53,7 +53,7 @@ void InteractiveCamera::rotateRight(float m) {
 	float xDirection = sin(yaw2) * cos(pitch2);
 	float yDirection = sin(pitch2);
 	float zDirection = cos(yaw2) * cos(pitch2);
-	Vector3Df directionToCamera = Vector3Df(xDirection, yDirection, zDirection);
+	vcl::vec3 directionToCamera = vcl::vec3(xDirection, yDirection, zDirection);
 	viewDirection = directionToCamera * (-1.0);
 }
 
@@ -70,7 +70,7 @@ void InteractiveCamera::changeFocalDistance(float m) {
 
 
 void InteractiveCamera::setResolution(float x, float y) {
-	resolution = Vector2Df(x, y);
+	resolution = vcl::vec2(x, y);
 	setFOVX(fov.x);
 }
 
@@ -94,16 +94,16 @@ void InteractiveCamera::buildRenderCamera(Camera* renderCamera) {
 	float xDirection = sin(yaw) * cos(pitch);
 	float yDirection = sin(pitch);
 	float zDirection = cos(yaw) * cos(pitch);
-	Vector3Df directionToCamera = Vector3Df(xDirection, yDirection, zDirection);
+	vcl::vec3 directionToCamera = vcl::vec3(xDirection, yDirection, zDirection);
 	viewDirection = directionToCamera * (-1.0);
-	Vector3Df eyePosition = centerPosition + directionToCamera * radius;
+	vcl::vec3 eyePosition = centerPosition + directionToCamera * radius;
 	//Vector3Df eyePosition = centerPosition; // rotate camera from stationary viewpoint
 
-	renderCamera->position = eyePosition;
-	renderCamera->view = viewDirection;
-	renderCamera->up = Vector3Df(0, 1, 0);
-	renderCamera->resolution = Vector2Df(resolution.x, resolution.y);
-	renderCamera->fov = Vector2Df(fov.x, fov.y);
+	renderCamera->position = vcl_to_cl_f3(eyePosition);
+	renderCamera->view = vcl_to_cl_f3(viewDirection);
+	renderCamera->up = { 0, 1, 0 };
+	renderCamera->resolution = { resolution.x, resolution.y };
+	renderCamera->fov = { fov.x, fov.y };
 	renderCamera->apertureRadius = apertureRadius;
 	renderCamera->focalDistance = focalDistance;
 }

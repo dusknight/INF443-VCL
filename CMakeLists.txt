@@ -31,8 +31,10 @@ file(
     GLOB_RECURSE
     source_files
     vcl/*.[ch]pp
+    cl_ext/*.h
+    cl_ext/*.[ch]pp
     main/*.[ch]pp
-    mian/*.h
+    main/*.h
     third_party/*.[ch]pp
     third_party/*.[ch]
     scenes/*.[ch]pp

@@ -31,10 +31,11 @@
 
 #include <vector>
 #include <fstream>
-#include "linear_algebra.h"
-#include "camera.h"
-#include "geometry.h"
-
+#include "cl_ext/linear_algebra.h"
+#include "cl_ext/camera.h"
+#include "cl_ext/geometry.h"
+#include "cl_ext/cl_defs.h"
+// #include "cl_ext/BVHCPU.h"
 //-------------CL----------------------
 
 using namespace std;
@@ -56,6 +57,9 @@ Buffer cl_accumbuffer;
 // BufferGL cl_vbo;
 // vector<Memory> cl_vbos;
 vector<Memory> image_buffers;
+Buffer bvh_buffer;
+Buffer vtx_buffer;
+Buffer mat_buffer;
 // image_buffers.resize(4);
 GLuint rbo_IDs[2];
 GLuint fbo_ID;
@@ -105,7 +109,6 @@ void initOpenCL()
 		cout << "\t\tMax work group size: " << devices[i].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>() << endl << endl;
 	}
 
-
 	// Pick one device
 	pickDevice(device, devices);
 	cout << "\nUsing OpenCL device: \t" << device.getInfo<CL_DEVICE_NAME>() << endl;
@@ -141,7 +144,6 @@ void initOpenCL()
 	// Create a command queue
 	queue = CommandQueue(context, device);
 
-
 	// Convert the OpenCL source code to a string// Convert the OpenCL source code to a string
 	string source;
 	ifstream file("../../../cl_kernels/simple_fbo.cl");
@@ -152,6 +154,7 @@ void initOpenCL()
 		exit(1);
 	}
 
+    // Read Kernel
     file.seekg(0, ios::end);
     len = file.tellg();
     file.seekg(0, ios::beg);
@@ -159,8 +162,8 @@ void initOpenCL()
     file.read(&source[0], len);
     cout << "[INFO] CL source read successfully." << endl;
 
+    // Create an OpenCL program with source
 	const char* kernel_source = source.c_str();
-	// Create an OpenCL program with source
 	program = Program(context, kernel_source);
 
 	// Build the program for the selected device 
@@ -386,6 +389,47 @@ bool setupBufferFBO() {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     return true;
 }
+
+bool setupBufferBVH(vector<BVHNodeGPU>& bvh_data, float bvh_size, float scene_size) {
+    cl_int err = 0;
+    if(bvh_buffer()) clReleaseMemObject(bvh_buffer());
+
+    //if (bvh_size + scene_size > target_device.global_mem_size)
+    //    throw std::runtime_error("BVH and Scene Data size combined exceed Device's global memory size.");
+
+    bvh_buffer = Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
+        sizeof(BVHNodeGPU) * bvh_data.size(), bvh_data.data(), &err);
+    // error? TODO: error
+    return true;
+}
+
+bool setupBufferVtx(vector<TriangleGPU>& vtx_data, float scene_size) {
+    cl_int err = 0;
+    if (vtx_buffer()) clReleaseMemObject(vtx_buffer());
+
+    //if (bvh_size + scene_size > target_device.global_mem_size)
+    //    throw std::runtime_error("BVH and Scene Data size combined exceed Device's global memory size.");
+
+    bvh_buffer = Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
+        sizeof(TriangleGPU) * vtx_data.size(), vtx_data.data(), &err);
+    // error? TODO: error
+    return true;
+}
+
+bool setupBufferMat(vector<Material>& mat_data) {
+    cl_int err = 0;
+ 
+    if (mat_buffer()) clReleaseMemObject(mat_buffer());
+
+    //if (bvh_size + scene_size > target_device.global_mem_size)
+    //    throw std::runtime_error("BVH and Scene Data size combined exceed Device's global memory size.");
+
+    bvh_buffer = Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
+        sizeof(Material) * mat_data.size(), mat_data.data(), &err);
+    // error? TODO: error
+    return true;
+}
+
 
 
 
