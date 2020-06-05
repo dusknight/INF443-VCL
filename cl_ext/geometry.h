@@ -1,4 +1,5 @@
 #pragma once
+#include "vcl/math/math.hpp"
 #include "cl_ext/linear_algebra.h"
 
 // padding with dummy variables are required for memory alignment
@@ -12,7 +13,7 @@ struct Sphere
 	int dummy1;
 	float dummy2;
 	float dummy3;
-	Vector3Df position;
-	Vector3Df color;
-	Vector3Df emission;
+	cl_float3 position;
+	cl_float3 color;
+	cl_float3 emission;
 }; 

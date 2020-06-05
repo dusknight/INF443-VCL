@@ -185,27 +185,27 @@ void initOpenCL()
 void initScene(Sphere* cpu_spheres) {
      // floor
     cpu_spheres[0].radius = 200.0f;
-    cpu_spheres[0].position = Vector3Df(0.0f, -200.4f, 0.0f);
-    cpu_spheres[0].color = Vector3Df(0.9f, 0.3f, 0.0f);
-    cpu_spheres[0].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+    cpu_spheres[0].position = { 0.0f, -200.4f, 0.0f };
+    cpu_spheres[0].color = { 0.9f, 0.3f, 0.0f };
+    cpu_spheres[0].emission = { 0.0f, 0.0f, 0.0f };
 
     // left sphere
     cpu_spheres[1].radius = 0.16f;
-    cpu_spheres[1].position = Vector3Df(-0.25f, -0.24f, -0.1f);
-    cpu_spheres[1].color = Vector3Df(0.9f, 0.8f, 0.7f);
-    cpu_spheres[1].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+    cpu_spheres[1].position = { -0.25f, -0.24f, -0.1f };
+    cpu_spheres[1].color = { 0.9f, 0.8f, 0.7f };
+    cpu_spheres[1].emission = { 0.0f, 0.0f, 0.0f };
 
     // right sphere
     cpu_spheres[2].radius = 0.16f;
-    cpu_spheres[2].position = Vector3Df(0.25f, -0.24f, 0.1f);
-    cpu_spheres[2].color = Vector3Df(0.9f, 0.8f, 0.7f);
-    cpu_spheres[2].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+    cpu_spheres[2].position = { 0.25f, -0.24f, 0.1f };
+    cpu_spheres[2].color = { 0.9f, 0.8f, 0.7f };
+    cpu_spheres[2].emission = { 0.0f, 0.0f, 0.0f };
 
     // lightsource
     cpu_spheres[3].radius = 1.0f;
-    cpu_spheres[3].position = Vector3Df(0.0f, 1.36f, 0.0f);
-    cpu_spheres[3].color = Vector3Df(0.0f, 0.0f, 0.0f);
-    cpu_spheres[3].emission = Vector3Df(9.0f, 8.0f, 6.0f);
+    cpu_spheres[3].position = { 0.0f, 1.36f, 0.0f };
+    cpu_spheres[3].color = { 0.0f, 0.0f, 0.0f };
+    cpu_spheres[3].emission = { 9.0f, 8.0f, 6.0f };
 }
 
 
@@ -659,7 +659,7 @@ void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int acti
         interactiveCamera->changePitch(0.1);
     }
 
-        // cpu_spheres[1].position + Vector3Df(10, 0, 0);
+        // cpu_spheres[1].position + vcl::vec3(10, 0, 0);
     //    GlfwManager::cameraUpdateCallback(glm::vec4(0, 0, 1, 0), 0, 0);
 
     if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
