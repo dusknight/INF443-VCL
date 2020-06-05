@@ -207,7 +207,7 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 	int*
 		randSeed1 = seed1;
 
-	for (int bounces = 0; bounces < 50; bounces++) {
+	for (int bounces = 0; bounces < 30; bounces++) {
 
 		float t;   /* distance to intersection */
 		int hitsphere_id = 0; /* index of intersected sphere */
@@ -297,12 +297,12 @@ render_kernel(
 	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
 	float invSamples = 1.0f / SAMPLES;
 
-	int supersamplenumber = 10;
+	int supersamplenumber = 30;
 	uint seedsupersampling = 2021;
 	for(int j = 0; j < supersamplenumber;j++){
-		float offsetdaix = dai_float_01(seedsupersampling)*0.113;
+		float offsetdaix = dai_float_01(seedsupersampling)/(img_width+0.113);
 		seedsupersampling = wang_hash(seedsupersampling);
-		float offsetdaiy = dai_float_01(seedsupersampling)*0.113;
+		float offsetdaiy = dai_float_01(seedsupersampling)/(img_height+0.113);
 		seedsupersampling = wang_hash(seedsupersampling);
 		struct Ray camray = createCamRay(x_coord + offsetdaix, y_coord+offsetdaiy, width, height, cam, &seed0, &seed1);
 		for (int i = 0; i < SAMPLES; i++){
