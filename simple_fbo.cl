@@ -77,7 +77,7 @@ static float get_random(unsigned int* seed0, unsigned int* seed1) {
 	return (res.f - 2.0f) / 2.0f;
 }
 
-Ray createCamRay(const int x_coord, const int y_coord, const int width, const int height, __constant Camera* cam, const int* seed0, const int* seed1) {
+Ray createCamRay(const float x_coord, const float y_coord, const int width, const int height, __constant Camera* cam, const int* seed0, const int* seed1) {
 
 	/* create a local coordinate frame for the camera */
 	float3 rendercamview = cam->view; rendercamview = normalize(rendercamview);
@@ -89,11 +89,11 @@ Ray createCamRay(const int x_coord, const int y_coord, const int width, const in
 	float3 horizontal = horizontalAxis * tan(cam->fov.x * 0.5f * (PI / 180));
 	float3 vertical = verticalAxis * tan(cam->fov.y * -0.5f * (PI / 180));
 
-	unsigned int x = x_coord;
-	unsigned int y = y_coord;
+	/*unsigned int x = x_coord;
+	unsigned int y = y_coord;*/
 
-	int pixelx = x_coord;
-	int pixely = height - y_coord - 1;
+	float pixelx = x_coord;
+	float pixely = height - y_coord - 1;
 
 	float sx = (float)pixelx / (width - 1.0f);
 	float sy = (float)pixely / (height - 1.0f);
@@ -297,12 +297,12 @@ render_kernel(
 	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
 	float invSamples = 1.0f / SAMPLES;
 
-	int supersamplenumber = 30;
+	int supersamplenumber = 10;
 	uint seedsupersampling = 2021;
 	for(int j = 0; j < supersamplenumber;j++){
-		int offsetdaix = dai_int_05(seedsupersampling);
+		float offsetdaix = dai_float_01(seedsupersampling)*0.113;
 		seedsupersampling = wang_hash(seedsupersampling);
-		int offsetdaiy = dai_int_05(seedsupersampling);
+		float offsetdaiy = dai_float_01(seedsupersampling)*0.113;
 		seedsupersampling = wang_hash(seedsupersampling);
 		struct Ray camray = createCamRay(x_coord + offsetdaix, y_coord+offsetdaiy, width, height, cam, &seed0, &seed1);
 		for (int i = 0; i < SAMPLES; i++){
