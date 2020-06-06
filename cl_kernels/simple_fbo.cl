@@ -45,6 +45,8 @@ float determinant3d(float3 v1, float3 v2, float3 v3){
 	return v1[0]*( v2[1]* v3[2]- v3[1]*v2[2]) - v2[0]*(v1[1]*v3[2]-v3[1]*v1[2]) + v3[0]*(v1[1]*v2[2]-v2[1]*v1[2])
 }
 
+
+
 uint wang_hash(uint seed)
 /*See http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/ */
 {
@@ -176,6 +178,36 @@ float intersect_sphere(const Sphere* sphere, const Ray* ray) /* version using lo
 	if ((b + disc) > EPSILON) return b + disc;
 
 	return 0.0f;
+}
+
+float intersect_triangle(const Triangle* triangle, const Ray* ray)
+{
+	float3 vec_test = triangle->vertex1 - ray->origin;
+
+	if (dot(vec_test, ray->dir) <= EPSILON) return 0.0f;
+
+	vec_test_normalized = normalize(vec_test);
+	float velocity = dot(vec_test, ray->dir);
+	float TIMEintersect = sqrt(dot(vec_test, vec_test)) / velocity
+
+		float3 POINTintersect = ray->origin + TIMEintersect * ray->dir;
+
+		/* Check step 1*/
+		float3 e12 = normalize(vertex2 - vertex1);
+		float3 e13 = normalize(vertex3 - vertex1);
+		float cos_angle1 = dot(e12, e13);
+		float3 vec_inersetcAnd1 = normalize(POINTintersect - triangle->vertex1);
+		if (dot(vec_inersetcAnd1, e12) < cos_angle1 || dot(vec_inersetcAnd1, e13) < cos_angle1) return 0.0f;
+
+		/* Check step 2*/
+		float3 e32 = normalize(vertex2 - vertex3);
+		float3 e31 = normalize(vertex1 - vertex3);
+		float cos_angle3 = dot(e32, e31);
+		float3 vec_inersetcAnd3 = normalize(POINTintersect - triangle->vertex1);
+		if (dot(vec_inersetcAnd3, e31) < cos_angle3 || dot(vec_inersetcAnd1, e32) < cos_angle3) return 0.0f;
+
+		return TIMEintersect;
+
 }
 
 bool intersect_scene(__constant Sphere* spheres, const Ray* ray, float* t, int* sphere_id, const int sphere_count)
