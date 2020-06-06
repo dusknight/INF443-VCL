@@ -41,10 +41,22 @@ typedef struct Triangle {
 	float3 nvector;
 }Triangle;
 
-float determinant3d(float3 v1, float3 v2, float3 v3){
-	return v1[0]*( v2[1]* v3[2]- v3[1]*v2[2]) - v2[0]*(v1[1]*v3[2]-v3[1]*v1[2]) + v3[0]*(v1[1]*v2[2]-v2[1]*v1[2])
+float determinant3d(float3 v1, float3 v2, float3 v3) {
+	return v1[0] * (v2[1] * v3[2] - v3[1] * v2[2]) - v2[0] * (v1[1] * v3[2] - v3[1] * v1[2]) + v3[0] * (v1[1] * v2[2] - v2[1] * v1[2]);
 }
 
+void changeOrientation(Triangle* triangle) {
+	if (determinant3d(triangle->vertex1, triangle->vertex2, triangle->vertex3) < 0) {
+		float3 temp = triangle->vertex1;
+		triangle->vertex1 = triangle->vertex2;
+		triangle->vertex2 = temp;
+	}
+}
+
+void TriangleInitialize(Triangle* triangle) {
+	changeOrientation(triangle);
+	triangle->nvector = normalize(cross(triangle->vertex2 - triangle->vertex1, triangle->vertex3 - triangle->vertex1));
+}
 
 
 uint wang_hash(uint seed)
