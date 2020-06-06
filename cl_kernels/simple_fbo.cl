@@ -199,7 +199,7 @@ struct Ray createCamRay_simple(const int x_coord, const int y_coord, const int w
 }
 
 /* (__global Sphere* sphere, const Ray* ray) */
-float intersect_sphere(const Sphere* sphere, const Ray* ray) /* version using local copy of sphere */
+float intersect_sphere(const Sphere* sphere, Ray* ray) /* version using local copy of sphere */
 {
 	float3 rayToCenter = sphere->pos - ray->origin;
 	float b = dot(rayToCenter, ray->dir);
@@ -215,9 +215,10 @@ float intersect_sphere(const Sphere* sphere, const Ray* ray) /* version using lo
 	return 0.0f;
 }
 
-void diffuse_sphere(const Sphere sphere, Ray* ray, const float TIMEintersection, HITRECORD* hitrecord) {
-	unsigned int randSeed00 = 2020;
-	unsigned int randSeed10 = 1996;
+void diffuse_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
+	*seed0 += 1;
+	*seed1 += 233;
+
 	hitrecord->color = sphere.color;
 	hitrecord->emission = sphere.emission;
 
@@ -230,8 +231,8 @@ void diffuse_sphere(const Sphere sphere, Ray* ray, const float TIMEintersection,
 	hitrecord->normal = normal_facing;
 
 
-	float rand1 = get_random(&randSeed00, &randSeed10) * 2.0f * PI;
-	float rand2 = get_random(&randSeed10, &randSeed00);
+	float rand1 = get_random(seed0, seed1) * 2.0f * PI;
+	float rand2 = get_random(seed1, seed0);
 	float rand2s = sqrt(rand2);
 
 	/* create a local orthogonal coordinate frame centered at the hitpoint */
@@ -248,7 +249,7 @@ void diffuse_sphere(const Sphere sphere, Ray* ray, const float TIMEintersection,
 	ray->dir = newdir;
 }
 
-float intersect_triangle(const Triangle* triangle, const Ray* ray)
+float intersect_triangle(const Triangle* triangle, Ray* ray)
 {
 	float3 vec_test = triangle->vertex1 - ray->origin;
 
@@ -278,7 +279,7 @@ float intersect_triangle(const Triangle* triangle, const Ray* ray)
 
 }
 
-bool intersect_scene(__constant Sphere* spheres, Ray* ray, float* t, int* sphere_id, const int sphere_count, HITRECORD* hitrecord)
+bool intersect_scene(__constant Sphere* spheres, Ray* ray, float* t, int* sphere_id, const int sphere_count, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1)
 {
 	/* initialise t to a very large number,
 	so t will be guaranteed to be smaller
@@ -305,7 +306,7 @@ bool intersect_scene(__constant Sphere* spheres, Ray* ray, float* t, int* sphere
 		}
 	}
 	if (*t < inf) {
-		diffuse_sphere(spheres[*sphere_id], &ray, *t, hitrecord);
+		diffuse_sphere(spheres[*sphere_id], ray, *t, hitrecord, seed0, seed1);
 	}
 	return *t < inf; /* true when ray interesects the scene */
 }
@@ -321,7 +322,7 @@ bool intersect_scene(__constant Sphere* spheres, Ray* ray, float* t, int* sphere
 /* each ray hitting a surface will be reflected in a random direction (by randomly sampling the hemisphere above the hitpoint) */
 /* small optimisation: diffuse ray directions are calculated using cosine weighted importance sampling */
 
-float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_count,  int* seed0,  int* seed1, __constant float4* HDRimg) {
+float3 trace(__constant Sphere* spheres, Ray* camray, const int sphere_count,  int* seed0,  int* seed1, __constant float4* HDRimg) {
 	HITRECORD hitrecord;
 	Ray ray = *camray;
 
@@ -341,7 +342,7 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 
 		/* if ray misses scene, return background colour */
-		if (!intersect_scene(spheres, &ray, &t, &hitsphere_id, sphere_count, &hitrecord))
+		if (!intersect_scene(spheres, &ray, &t, &hitsphere_id, sphere_count, &hitrecord, seed0, seed1))
 			//return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 		{
 			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
@@ -397,8 +398,8 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 		// ray.dir = newdir;
 
 		/* add the colour and light contributions to the accumulated colour */
+		//accum_color += mask * hitrecord.emission;
 		accum_color += mask * hitrecord.emission;
-
 		/* the mask colour picks up surface colours at each bounce */
 		mask *= hitrecord.color;
 

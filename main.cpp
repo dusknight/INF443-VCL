@@ -236,24 +236,24 @@ void initScene(Sphere* cpu_spheres) {
         // floor
     cpu_spheres[0].radius = 200.0f;
     cpu_spheres[0].position = Vector3Df(0.0f, -200.4f, 0.0f);
-    cpu_spheres[0].color = Vector3Df(0.3f, 0.1f, 0.1f);
-    cpu_spheres[0].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+    cpu_spheres[0].color = Vector3Df(0.1f, 0.1f, 0.1f);
+    cpu_spheres[0].emission = Vector3Df(0.3f, 0.0f, 0.0f);
 
     // left sphere
     cpu_spheres[1].radius = 0.16f;
     cpu_spheres[1].position = Vector3Df(-0.25f, -0.24f, -0.1f);
-    cpu_spheres[1].color = Vector3Df(0.5f, 0.5f, 0.5f);
+    cpu_spheres[1].color = Vector3Df(0.0f, 2.5f, 0.0f);
     cpu_spheres[1].emission = Vector3Df(0.0f, 0.0f, 0.0f);
 
     // right sphere
     cpu_spheres[2].radius = 0.16f;
     cpu_spheres[2].position = Vector3Df(0.25f, -0.24f, 0.1f);
-    cpu_spheres[2].color = Vector3Df(0.7f, 0.7f, 0.7f);
-    cpu_spheres[2].emission = Vector3Df(8.0f, 0.0f, 0.0f);
+    cpu_spheres[2].color = Vector3Df(0.0f, 0.0f, 3.7f);
+    cpu_spheres[2].emission = Vector3Df(0.0f, 0.0f, 0.0f);
 
     // lightsource
-    cpu_spheres[3].radius = 1.0f;
-    cpu_spheres[3].position = Vector3Df(0.0f, 1.36f, 0.0f);
+    cpu_spheres[3].radius = 20.0f;
+    cpu_spheres[3].position = Vector3Df(0.0f, 20.36f, 0.0f);
     cpu_spheres[3].color = Vector3Df(0.0f, 0.0f, 0.0f);
     cpu_spheres[3].emission = Vector3Df(5.0f, 5.0f, 5.0f);
 }
