@@ -42,9 +42,8 @@ typedef struct Triangle {
 }Triangle;
 
 float determinant3d(float3 v1, float3 v2, float3 v3) {
-	return v1[0] * (v2[1] * v3[2] - v3[1] * v2[2]) - v2[0] * (v1[1] * v3[2] - v3[1] * v1[2]) + v3[0] * (v1[1] * v2[2] - v2[1] * v1[2]);
+	return v1.x * (v2.y * v3.z - v3.y * v2.z) - v2.x * (v1.y * v3.z - v3.y * v1.z) + v3.x * (v1.y * v2.z - v2.y * v1.z);
 }
-
 void changeOrientation(Triangle* triangle) {
 	if (determinant3d(triangle->vertex1, triangle->vertex2, triangle->vertex3) < 0) {
 		float3 temp = triangle->vertex1;
@@ -198,27 +197,27 @@ float intersect_triangle(const Triangle* triangle, const Ray* ray)
 
 	if (dot(vec_test, ray->dir) <= EPSILON) return 0.0f;
 
-	vec_test_normalized = normalize(vec_test);
-	float velocity = dot(vec_test, ray->dir);
-	float TIMEintersect = sqrt(dot(vec_test, vec_test)) / velocity
+	float3 vec_test_normalized = normalize(vec_test);
+	float velocity = dot(vec_test_normalized, ray->dir);
+	float TIMEintersect = sqrt(dot(vec_test, vec_test)) / velocity;
 
-		float3 POINTintersect = ray->origin + TIMEintersect * ray->dir;
+	float3 POINTintersect = ray->origin + TIMEintersect * ray->dir;
 
-		/* Check step 1*/
-		float3 e12 = normalize(vertex2 - vertex1);
-		float3 e13 = normalize(vertex3 - vertex1);
-		float cos_angle1 = dot(e12, e13);
-		float3 vec_inersetcAnd1 = normalize(POINTintersect - triangle->vertex1);
-		if (dot(vec_inersetcAnd1, e12) < cos_angle1 || dot(vec_inersetcAnd1, e13) < cos_angle1) return 0.0f;
+	/* Check step 1*/
+	float3 e12 = normalize(triangle->vertex2 - triangle->vertex1);
+	float3 e13 = normalize(triangle->vertex3 - triangle->vertex1);
+	float cos_angle1 = dot(e12, e13);
+	float3 vec_inersetcAnd1 = normalize(POINTintersect - triangle->vertex1);
+	if (dot(vec_inersetcAnd1, e12) < cos_angle1 || dot(vec_inersetcAnd1, e13) < cos_angle1) return 0.0f;
 
-		/* Check step 2*/
-		float3 e32 = normalize(vertex2 - vertex3);
-		float3 e31 = normalize(vertex1 - vertex3);
-		float cos_angle3 = dot(e32, e31);
-		float3 vec_inersetcAnd3 = normalize(POINTintersect - triangle->vertex1);
-		if (dot(vec_inersetcAnd3, e31) < cos_angle3 || dot(vec_inersetcAnd1, e32) < cos_angle3) return 0.0f;
+	/* Check step 2*/
+	float3 e32 = normalize(triangle->vertex2 - triangle->vertex3);
+	float3 e31 = normalize(triangle->vertex1 - triangle->vertex3);
+	float cos_angle3 = dot(e32, e31);
+	float3 vec_inersetcAnd3 = normalize(POINTintersect - triangle->vertex1);
+	if (dot(vec_inersetcAnd3, e31) < cos_angle3 || dot(vec_inersetcAnd1, e32) < cos_angle3) return 0.0f;
 
-		return TIMEintersect;
+	return TIMEintersect;
 
 }
 
