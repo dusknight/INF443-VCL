@@ -35,6 +35,7 @@
 #include "cl_ext/camera.h"
 #include "cl_ext/geometry.h"
 #include "cl_ext/cl_defs.h"
+#include "cl_ext/cl_manager.h"
 // #include "cl_ext/BVHCPU.h"
 //-------------CL----------------------
 
@@ -45,21 +46,10 @@ const int sphere_count = 4;
 
 
 // OpenCL objects
-Device device;
-CommandQueue queue;
-Kernel kernel;
-Context context;
-Program program;
-Buffer cl_output;
-Buffer cl_spheres;
-Buffer cl_camera;
-Buffer cl_accumbuffer;
+cl_manager cl_mgr;
 // BufferGL cl_vbo;
 // vector<Memory> cl_vbos;
-vector<Memory> image_buffers;
-Buffer bvh_buffer;
-Buffer vtx_buffer;
-Buffer mat_buffer;
+
 // image_buffers.resize(4);
 GLuint rbo_IDs[2];
 GLuint fbo_ID;
@@ -78,109 +68,6 @@ int buffer_switch = 1;
 int buffer_reset = 0;
 int scene_changed = 0;
 
-
-void initOpenCL()
-{
-	// Get all available OpenCL platforms (e.g. AMD OpenCL, Nvidia CUDA, Intel OpenCL)
-	vector<Platform> platforms;
-	Platform::get(&platforms);
-	cout << "Available OpenCL platforms : " << endl << endl;
-	for (int i = 0; i < platforms.size(); i++)
-		cout << "\t" << i + 1 << ": " << platforms[i].getInfo<CL_PLATFORM_NAME>() << endl;
-
-	cout << endl << "WARNING: " << endl << endl;
-	cout << "OpenCL-OpenGL interoperability is only tested " << endl;
-	cout << "on discrete GPUs from Nvidia and AMD" << endl;
-	cout << "Other devices (such as Intel integrated GPUs) may fail" << endl << endl;
-
-	// Pick one platform
-	Platform platform;
-	pickPlatform(platform, platforms);
-	cout << "\nUsing OpenCL platform: \t" << platform.getInfo<CL_PLATFORM_NAME>() << endl;
-
-	// Get available OpenCL devices on platform
-	vector<Device> devices;
-	platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
-
-	cout << "Available OpenCL devices on this platform: " << endl << endl;
-	for (int i = 0; i < devices.size(); i++) {
-		cout << "\t" << i + 1 << ": " << devices[i].getInfo<CL_DEVICE_NAME>() << endl;
-		cout << "\t\tMax compute units: " << devices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << endl;
-		cout << "\t\tMax work group size: " << devices[i].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>() << endl << endl;
-	}
-
-	// Pick one device
-	pickDevice(device, devices);
-	cout << "\nUsing OpenCL device: \t" << device.getInfo<CL_DEVICE_NAME>() << endl;
-
-#if defined _WIN32
-	static cl_context_properties properties[] =
-	{
-		CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
-		CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
-		CL_CONTEXT_PLATFORM, (cl_context_properties)platform(),
-		0
-	};
-#elif defined __linux
-	static cl_context_properties properties[] =
-	{
-		CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
-		CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
-		CL_CONTEXT_PLATFORM, (cl_context_properties)platform(),
-		0
-	};
-#elif defined(__APPLE__) || defined(__MACOSX)
-	CGLContextObj glContext = CGLGetCurrentContext();
-	CGLShareGroupObj shareGroup = CGLGetShareGroup(glContext);
-	static cl_context_properties properties[] =
-	{
-		CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,(cl_context_properties)shareGroup,
-		0
-	};
-#endif // _WIN_32
-
-	context = Context(device, properties);
-
-	// Create a command queue
-	queue = CommandQueue(context, device);
-
-	// Convert the OpenCL source code to a string// Convert the OpenCL source code to a string
-	string source;
-	ifstream file("../../../cl_kernels/simple_fbo.cl");
-    streamoff len;
-	if (!file) {
-		cout << "\nNo OpenCL file found!" << endl << "Exiting..." << endl;
-		system("PAUSE");
-		exit(1);
-	}
-
-    // Read Kernel
-    file.seekg(0, ios::end);
-    len = file.tellg();
-    file.seekg(0, ios::beg);
-    source.resize(len);
-    file.read(&source[0], len);
-    cout << "[INFO] CL source read successfully." << endl;
-
-    // Create an OpenCL program with source
-	const char* kernel_source = source.c_str();
-	program = Program(context, kernel_source);
-
-	// Build the program for the selected device 
-	cl_int result = program.build({ device }); // "-cl-fast-relaxed-math"
-	if (result) cout << "Error during compilation OpenCL code!!!\n (" << result << ")" << endl;
-    // std::string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
-    // std::cout << buildlog << endl;
-	if (result == CL_BUILD_PROGRAM_FAILURE || result == CL_INVALID_PROGRAM) {
-		// Get the build log
-		std::string name = device.getInfo<CL_DEVICE_NAME>();
-		std::string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
-		std::cerr << "Build log for " << name << ":" << std::endl
-			<< buildlog << std::endl;
-		printErrorLog(program, device);
-		system("PAUSE");
-	}
-}
 
 void initScene(Sphere* cpu_spheres) {
      // floor
@@ -209,40 +96,13 @@ void initScene(Sphere* cpu_spheres) {
 }
 
 
-void initCLKernel() {
 
-    // pick a rendermode
-    unsigned int rendermode = 1;
-
-    // Create a kernel (entry point in the OpenCL source program)
-    kernel = Kernel(program, "render_kernel");
-
-    // specify OpenCL kernel arguments
-    if (buffer_switch) {
-        kernel.setArg(0, image_buffers[0]);
-        kernel.setArg(1, image_buffers[1]);
-    }
-    else {
-        kernel.setArg(1, image_buffers[0]);
-        kernel.setArg(0, image_buffers[1]);
-    }
-    // kernel.setArg(2, buffer_switch);
-    kernel.setArg(2, buffer_reset);
-    kernel.setArg(3, cl_spheres);
-    kernel.setArg(4, window_width);
-    kernel.setArg(5, window_height);
-    kernel.setArg(6, sphere_count);
-    kernel.setArg(7, framenumber);
-    // kernel.setArg(8, cl_camera);
-    kernel.setArg(9, rand());
-    kernel.setArg(10, rand());
-}
 
 void runKernel() {
     // every pixel in the image has its own thread or "work item",
     // so the total amount of work items equals the number of pixels
     std::size_t global_work_size = window_width * window_height;
-    std::size_t local_work_size = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);;
+    std::size_t local_work_size = cl_mgr.kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(cl_mgr.device);;
 
     // Ensure the global work size is a multiple of local work size
     if (global_work_size % local_work_size != 0)
@@ -265,26 +125,26 @@ void runKernel() {
 
     cl_int err_code;
     //this passes in the vector of VBO buffer objects => RBO objects
-    err_code= queue.enqueueAcquireGLObjects(&image_buffers);
+    err_code= cl_mgr.queue.enqueueAcquireGLObjects(&cl_mgr.image_buffers);
     if (err_code != CL_SUCCESS) {
         std::cerr << "ERROR in locking texture : " << err_code << std::endl;
     }
-    queue.finish();
+    cl_mgr.queue.finish();
 
     // launch the kernel
-    err_code = queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size); // local_work_size
+    err_code = cl_mgr.queue.enqueueNDRangeKernel(cl_mgr.kernel, NULL, global_work_size, local_work_size); // local_work_size
     if (err_code != CL_SUCCESS) {
         std::cerr << "ERROR in running queue :" << err_code << std::endl;
     }
-    queue.finish();
+    cl_mgr.queue.finish();
 
     //Release the VBOs so OpenGL can play with them
     // err_code = queue.enqueueReleaseGLObjects(&cl_vbos);
-    err_code = queue.enqueueReleaseGLObjects(&image_buffers);
+    err_code = cl_mgr.queue.enqueueReleaseGLObjects(&cl_mgr.image_buffers);
     if (err_code != CL_SUCCESS) {
         std::cerr << "ERROR in unlocking texture :" << err_code << std::endl;
     }
-    queue.finish();
+    cl_mgr.queue.finish();
 
     // read from FBO, save a copy
     //glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_ID);
@@ -390,46 +250,6 @@ bool setupBufferFBO() {
     return true;
 }
 
-bool setupBufferBVH(vector<BVHNodeGPU>& bvh_data, float bvh_size, float scene_size) {
-    cl_int err = 0;
-    if(bvh_buffer()) clReleaseMemObject(bvh_buffer());
-
-    //if (bvh_size + scene_size > target_device.global_mem_size)
-    //    throw std::runtime_error("BVH and Scene Data size combined exceed Device's global memory size.");
-
-    bvh_buffer = Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
-        sizeof(BVHNodeGPU) * bvh_data.size(), bvh_data.data(), &err);
-    // error? TODO: error
-    return true;
-}
-
-bool setupBufferVtx(vector<TriangleGPU>& vtx_data, float scene_size) {
-    cl_int err = 0;
-    if (vtx_buffer()) clReleaseMemObject(vtx_buffer());
-
-    //if (bvh_size + scene_size > target_device.global_mem_size)
-    //    throw std::runtime_error("BVH and Scene Data size combined exceed Device's global memory size.");
-
-    bvh_buffer = Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
-        sizeof(TriangleGPU) * vtx_data.size(), vtx_data.data(), &err);
-    // error? TODO: error
-    return true;
-}
-
-bool setupBufferMat(vector<Material>& mat_data) {
-    cl_int err = 0;
- 
-    if (mat_buffer()) clReleaseMemObject(mat_buffer());
-
-    //if (bvh_size + scene_size > target_device.global_mem_size)
-    //    throw std::runtime_error("BVH and Scene Data size combined exceed Device's global memory size.");
-
-    bvh_buffer = Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
-        sizeof(Material) * mat_data.size(), mat_data.data(), &err);
-    // error? TODO: error
-    return true;
-}
-
 
 
 
@@ -512,7 +332,7 @@ int main()
     // test_cl();
     
     // initialise OpenCL
-    initOpenCL();
+    cl_mgr.initOpenCL();
 
     // create FBO
     setupBufferFBO();  // first GL
@@ -520,7 +340,7 @@ int main()
 
     cl_int err;
     for (int i = 0; i < 2; i++) {  // Then CL
-        image_buffers.push_back(cl::BufferRenderGL(context, CL_MEM_READ_WRITE, rbo_IDs[i], &err));
+        cl_mgr.image_buffers.push_back(cl::BufferRenderGL(cl_mgr.context, CL_MEM_READ_WRITE, rbo_IDs[i], &err));
         if (err != CL_SUCCESS) std::cerr << "ERROR allocating RBO : " << err << std::endl;
     }
 
@@ -531,13 +351,13 @@ int main()
 	initScene(cpu_spheres);
     interactiveCamera = new InteractiveCamera;
     interactiveCamera->changeYaw(0.1);
-	cl_spheres = Buffer(context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
-    cl_camera = Buffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(Camera), interactiveCamera);
+    cl_mgr.cl_spheres = Buffer(cl_mgr.context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
+    cl_mgr.cl_camera = Buffer(cl_mgr.context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(Camera), interactiveCamera);
     // hostRendercam = (Camera*) queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
     
     // clEnqueueMapBuffer
 	// intitialise the kernel
-	initCLKernel();
+    cl_mgr.initCLKernel(buffer_switch, buffer_reset, window_width, window_height, sphere_count, framenumber);
 
 
     // ************************************** //
@@ -567,7 +387,7 @@ int main()
         // framenumber++;
 
         // host to device: write
-        queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
+        cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
 
         //if (buffer_reset) {
         //    float arg = 0;
@@ -582,7 +402,7 @@ int main()
         // delete hostRendercam;
         // hostRendercam = new Camera;
         interactiveCamera->buildRenderCamera(hostRendercam);
-        queue.enqueueWriteBuffer(cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam, 0);
+        cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam, 0);
 
         // copy the host camera to a OpenCL camera
         
@@ -590,12 +410,12 @@ int main()
         // queue.enqueueMapBuffer(cl_camera, CL_TRUE, CL_MAP_WRITE, 0, sizeof(Camera));
         // update params
 
-        kernel.setArg(2, buffer_reset);
-        kernel.setArg(3, cl_spheres);  // in case that spheres move
-        kernel.setArg(7, framenumber);
-        kernel.setArg(8, cl_camera);
-        kernel.setArg(9, rand());
-        kernel.setArg(10, rand());
+        cl_mgr.kernel.setArg(2, buffer_reset);
+        cl_mgr.kernel.setArg(3, cl_mgr.cl_spheres);  // in case that spheres move
+        cl_mgr.kernel.setArg(7, framenumber);
+        cl_mgr.kernel.setArg(8, cl_mgr.cl_camera);
+        cl_mgr.kernel.setArg(9, rand());
+        cl_mgr.kernel.setArg(10, rand());
 
         runKernel();
 
