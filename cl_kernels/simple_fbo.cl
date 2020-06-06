@@ -33,6 +33,31 @@ typedef struct Camera {
 	float focalDistance;
 } Camera;
 
+/* Rignt Hand Systeme (Determinant>0)*/
+typedef struct Triangle {
+	float3 vertex1;
+	float3 vertex2;
+	float3 vertex3;
+	float3 nvector;
+}Triangle;
+
+float determinant3d(float3 v1, float3 v2, float3 v3) {
+	return v1.x * (v2.y * v3.z - v3.y * v2.z) - v2.x * (v1.y * v3.z - v3.y * v1.z) + v3.x * (v1.y * v2.z - v2.y * v1.z);
+}
+void changeOrientation(Triangle* triangle) {
+	if (determinant3d(triangle->vertex1, triangle->vertex2, triangle->vertex3) < 0) {
+		float3 temp = triangle->vertex1;
+		triangle->vertex1 = triangle->vertex2;
+		triangle->vertex2 = temp;
+	}
+}
+
+void TriangleInitialize(Triangle* triangle) {
+	changeOrientation(triangle);
+	triangle->nvector = normalize(cross(triangle->vertex2 - triangle->vertex1, triangle->vertex3 - triangle->vertex1));
+}
+
+
 uint wang_hash(uint seed)
 /*See http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/ */
 {
@@ -166,6 +191,36 @@ float intersect_sphere(const Sphere* sphere, const Ray* ray) /* version using lo
 	return 0.0f;
 }
 
+float intersect_triangle(const Triangle* triangle, const Ray* ray)
+{
+	float3 vec_test = triangle->vertex1 - ray->origin;
+
+	if (dot(vec_test, ray->dir) <= EPSILON) return 0.0f;
+
+	float3 vec_test_normalized = normalize(vec_test);
+	float velocity = dot(vec_test_normalized, ray->dir);
+	float TIMEintersect = sqrt(dot(vec_test, vec_test)) / velocity;
+
+	float3 POINTintersect = ray->origin + TIMEintersect * ray->dir;
+
+	/* Check step 1*/
+	float3 e12 = normalize(triangle->vertex2 - triangle->vertex1);
+	float3 e13 = normalize(triangle->vertex3 - triangle->vertex1);
+	float cos_angle1 = dot(e12, e13);
+	float3 vec_inersetcAnd1 = normalize(POINTintersect - triangle->vertex1);
+	if (dot(vec_inersetcAnd1, e12) < cos_angle1 || dot(vec_inersetcAnd1, e13) < cos_angle1) return 0.0f;
+
+	/* Check step 2*/
+	float3 e32 = normalize(triangle->vertex2 - triangle->vertex3);
+	float3 e31 = normalize(triangle->vertex1 - triangle->vertex3);
+	float cos_angle3 = dot(e32, e31);
+	float3 vec_inersetcAnd3 = normalize(POINTintersect - triangle->vertex1);
+	if (dot(vec_inersetcAnd3, e31) < cos_angle3 || dot(vec_inersetcAnd1, e32) < cos_angle3) return 0.0f;
+
+	return TIMEintersect;
+
+}
+
 bool intersect_scene(__constant Sphere* spheres, const Ray* ray, float* t, int* sphere_id, const int sphere_count)
 {
 	/* initialise t to a very large number,
@@ -190,6 +245,11 @@ bool intersect_scene(__constant Sphere* spheres, const Ray* ray, float* t, int* 
 	}
 	return *t < inf; /* true when ray interesects the scene */
 }
+
+
+
+
+
 
 
 /* the path tracing function */
@@ -218,7 +278,7 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 		/* if ray misses scene, return background colour */
 		if (!intersect_scene(spheres, &ray, &t, &hitsphere_id, sphere_count))
-			return accum_color += mask * (float3)(0.15f, 0.15f, 0.15f);
+			return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 
 		/* else, we've got a hit! Fetch the closest hit sphere */
 		Sphere hitsphere = spheres[hitsphere_id]; /* version with local copy of sphere */

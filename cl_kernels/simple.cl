@@ -18,6 +18,13 @@ typedef struct Sphere {
 	float3 emission;
 } Sphere;
 
+typedef struct Triangle {
+	float3 vertex1;
+	float3 vertex2;
+	float3 vertex3;
+	float3 nvector;
+}Triangle;
+
 static float get_random(unsigned int* seed0, unsigned int* seed1) {
 
 	/* hash the seeds using bitwise AND operations and bitshifts */
