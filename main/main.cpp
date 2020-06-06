@@ -27,15 +27,14 @@
 #define CL_GL_SHARING_EXT "cl_khr_gl_sharing"
 #endif // if defined(__APPLE__) || defined(__MACOSX)
 
-// #include <windows.h>  // TODO: config
 
 #include <vector>
 #include <fstream>
-#include "cl_ext/linear_algebra.h"
 #include "cl_ext/camera.h"
 #include "cl_ext/geometry.h"
 #include "cl_ext/cl_defs.h"
 #include "cl_ext/cl_manager.h"
+#include "cl_ext/data/HDRloader.h"
 // #include "cl_ext/BVHCPU.h"
 //-------------CL----------------------
 
@@ -43,7 +42,7 @@ using namespace std;
 using namespace cl;
 
 const int sphere_count = 4;
-
+const char* HDRmapname = "data/Topanga_Forest_B_3k.hdr";
 
 // OpenCL objects
 cl_manager cl_mgr;
@@ -95,6 +94,43 @@ void initScene(Sphere* cpu_spheres) {
     cpu_spheres[3].emission = { 9.0f, 8.0f, 6.0f };
 }
 
+
+
+void initHDR(cl_manager cl_mgr) {
+    // initialise HDR environment map
+    // from https://graphics.stanford.edu/wikis/cs148-11-summer/HDRIlluminator
+
+    HDRImage HDRresult;
+    const char* HDRfile = HDRmapname;
+
+    if (HDRLoader::load(HDRfile, HDRresult))
+        printf("HDR environment map loaded. Width: %d Height: %d\n", HDRresult.width, HDRresult.height);
+    else {
+        printf("HDR environment map not found\nAn HDR map is required as light source. Exiting now...\n");
+        system("PAUSE");
+        exit(0);
+    }
+
+    int HDRwidth = HDRresult.width;
+    int HDRheight = HDRresult.height;
+
+    cl_mgr.setupBUfferHDR(HDRresult);
+    cpuHDRenv = new Vec4f[HDRwidth * HDRheight];
+    //_data = new RGBColor[width*height];
+
+    for (int i = 0; i < HDRwidth; i++) {
+        for (int j = 0; j < HDRheight; j++) {
+            int idx = 3 * (HDRwidth * j + i);
+            //int idx2 = width*(height-j-1)+i;
+            int idx2 = HDRwidth * (j)+i;
+            cpuHDRenv[idx2] = Vec4f(HDRresult.colors[idx], HDRresult.colors[idx + 1], HDRresult.colors[idx + 2], 0.0f);
+        }
+    }
+
+    // copy HDR map to CUDA
+    cudaMalloc(&gpuHDRenv, HDRwidth * HDRheight * sizeof(float4));
+    cudaMemcpy(gpuHDRenv, cpuHDRenv, HDRwidth * HDRheight * sizeof(float4), cudaMemcpyHostToDevice);
+}
 
 
 

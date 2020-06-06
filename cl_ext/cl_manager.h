@@ -21,6 +21,7 @@
 #endif // if defined(__APPLE__) || defined(__MACOSX)
 
 #include "cl_ext/cl_defs.h"
+#include "cl_ext/data/HDRloader.h"
 
 // using namespace cl;
 using namespace std;
@@ -44,6 +45,7 @@ public:
 	cl::Buffer bvh_buffer;
 	cl::Buffer vtx_buffer;
 	cl::Buffer mat_buffer;
+	cl::Buffer hdr_buffer;
 
 	void setup_dev(cl_context_properties* properties, cl_device_id device_id, cl_platform_id platform_id);
 
@@ -62,5 +64,7 @@ public:
 	bool setupBufferVtx(vector<TriangleGPU>& vtx_data, float scene_size);
 
 	bool setupBufferMat(vector<Material>& mat_data);
+
+	bool setupBUfferHDR(HDRImage& img);
 
 };

@@ -294,7 +294,7 @@ void cl_manager::initOpenCL()
 
     // Convert the OpenCL source code to a string// Convert the OpenCL source code to a string
     string source;
-    ifstream file("../../../cl_kernels/simple_fbo.cl");
+    ifstream file("../../../cl_kernels/cornell_box.cl");
     streamoff len;
     if (!file) {
         cout << "\nNo OpenCL file found!" << endl << "Exiting..." << endl;
@@ -397,4 +397,13 @@ bool cl_manager::setupBufferMat(vector<Material>& mat_data) {
         sizeof(Material) * mat_data.size(), mat_data.data(), &err);
     // error? TODO: error
     return true;
+}
+
+bool cl_manager::setupBUfferHDR(HDRImage& img)
+{
+    cl_int err = 0;
+    bvh_buffer = cl::Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
+        sizeof(float) * img.height * img.width, img.colors, &err);
+    if (!err)  return true;
+    return false;
 }

@@ -6,6 +6,7 @@
 __constant float EPSILON = 0.00003f; /* req2uired to compensate for limited float precision */
 __constant float PI = 3.14159265359f;
 __constant int SAMPLES = 4;
+__constant intrrr HEAP_SIZE = 1500
 
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
 CLK_ADDRESS_CLAMP_TO_EDGE |
@@ -17,6 +18,9 @@ CLK_FILTER_NEAREST;
 typedef struct Ray {
 	float3 origin;
 	float3 dir;
+	float length;
+	bool is_shadow_ray;
+
 } Ray;
 
 typedef struct Sphere {
@@ -275,10 +279,10 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 bool rayTriangleIntersection(Ray* ray, HitInfo* hit, __global Triangle* scene_data, int idx);
 bool rayAabbIntersection(Ray* ray, AABB bb);
-bool traverseBVH(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, __global Triangle* scene_data);
-bool traceRay(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, int scene_size, __global Triangle* scene_data);
+bool traverseBVH(Ray* ray, HitInfo* hit, int bvh_size, __global BVHGPU* bvh, __global Triangle* scene_data);
+bool traceRay(Ray* ray, HitInfo* hit, int bvh_size, __global BVHGPU* bvh, int scene_size, __global Triangle* scene_data);
 
-bool traceRay(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, int scene_size, __global Triangle* scene_data)
+bool traceRay(Ray* ray, HitInfo* hit, int bvh_size, __global BVHGPU* bvh, int scene_size, __global Triangle* scene_data)
 {
 	bool flag = false;
 
@@ -307,7 +311,7 @@ bool traceRay(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, in
 				if ((proj1 >= 0.0 && proj2 >= 0.0) && (proj1 <= la && proj2 <= lb))
 				{
 					ray->length = t;
-					hit->hit_point = ray->origin + (ray->dir * t);
+					hit->hit_point.xyz = ray->origin + (ray->dir * t);
 					hit->light_ID = i;
 					hit->triangle_ID = -1;
 					flag = true;
@@ -326,7 +330,7 @@ bool traceRay(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, in
 	return flag;
 }
 
-bool traverseBVH(Ray* ray, HitInfo* hit, int bvh_size, __global BVHNodeGPU* bvh, __global Triangle* scene_data)
+bool traverseBVH(Ray* ray, HitInfo* hit, int bvh_size, __global BVHGPU* bvh, __global Triangle* scene_data)
 {
 	int candidate_list[HEAP_SIZE];
 	candidate_list[0] = 0;
@@ -369,18 +373,21 @@ bool rayTriangleIntersection(Ray* ray, HitInfo* hit, __global Triangle* scene_da
 	float4 v1v2 = scene_data[idx].v2 - scene_data[idx].v1;
 	float4 v1v3 = scene_data[idx].v3 - scene_data[idx].v1;
 
-	float4 pvec = cross(ray->dir, v1v3);
+	float4 pvec;
+	pvec.xyz = cross(ray->dir, v1v3.xyz);
 	float det = dot(v1v2, pvec);
 
 	float inv_det = 1.0f / det;
-	float4 dist = ray->origin - scene_data[idx].v1;
+	float4 dist;
+	dist.xyz = ray->origin - scene_data[idx].v1.xyz;
+	// dist.xyz = ray->origin - scene_data[idx].v1;
 	float u = dot(pvec, dist) * inv_det;
 
 	if (u < 0.0 || u > 1.0f)
 		return false;
 
 	float4 qvec = cross(dist, v1v2);
-	float v = dot(qvec, ray->dir) * inv_det;
+	float v = dot(qvec.xyz, ray->dir) * inv_det;
 
 	if (v < 0.0 || u + v > 1.0)
 		return false;
@@ -420,7 +427,7 @@ bool rayTriangleIntersection(Ray* ray, HitInfo* hit, __global Triangle* scene_da
 		float4 N3 = normalize(scene_data[idx].vn3);
 
 		float w = 1 - u - v;
-		hit->hit_point = ray->origin + ray->dir * t;
+		hit->hit_point.xyz = ray->origin + ray->dir * t;
 		hit->normal = normalize(N1 * w + N2 * u + N3 * v);
 
 		hit->triangle_ID = idx;
@@ -435,8 +442,8 @@ bool rayAabbIntersection(Ray* ray, AABB bb)
 	float t_max = INFINITY, t_min = -INFINITY;
 	float3 dir_inv = 1 / ray->dir.xyz;
 
-	float3 min_diff = (bb.p_min - ray->origin).xyz * dir_inv;
-	float3 max_diff = (bb.p_max - ray->origin).xyz * dir_inv;
+	float3 min_diff = (bb.p_min.xyz - ray->origin).xyz * dir_inv;
+	float3 max_diff = (bb.p_max.xyz - ray->origin).xyz * dir_inv;
 
 	if (!isnan(min_diff.x))
 	{
@@ -470,7 +477,7 @@ bool rayAabbIntersection(Ray* ray, AABB bb)
 
 
 
-union Colour { float c; uchar4 components; };
+// union Colour { float c; uchar4 components; };
 
 __kernel void
 /*render_kernel(__global float3* output, int width, int height, int rendermode)*/
@@ -523,71 +530,6 @@ render_kernel(
 		colorf4 += (prev_color * num_passes);
 		colorf4 /= (num_passes + 1);
 		colorf4.w = num_passes + 1;
-		write_imagef(outputImage, pixel, colorf4);
-	}
-}
-
-//
-__kernel void render_kernel(
-	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
-	__constant Sphere* spheres, const int width, const int height,
-	const int sphere_count, const int framenumber, __read_only const Camera* cam,
-	float random0, float random1)
-{
-	const uint hashedframenumber = wang_hash(framenumber);
-	/*int img_width = get_image_width(outputImage);
-	int img_height = get_image_height(outputImage);*/
-	unsigned int work_item_id = get_global_id(0);	/* the unique global id of the work item for the current pixel */
-	unsigned int x_coord = work_item_id % width;			/* x-coordinate of the pixel */
-	unsigned int y_coord = work_item_id / width;			/* y-coordinate of the pixel */
-	int2 pixel = (int2) (x_coord, y_coord);
-	/* seeds for random number generator */
-
-	unsigned int seed0 = x_coord * framenumber % 1000 + (random0 * 100);
-	unsigned int seed1 = y_coord * framenumber % 1000 + (random1 * 100);
-
-
-	/* add the light contribution of each sample and average over all samples*/
-	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
-	float invSamples = 1.0f / SAMPLES;
-
-	for (unsigned int i = 0; i < SAMPLES; i++) {
-		Ray camray = createCamRay(x_coord, y_coord, width, height, cam, &seed0, &seed1);
-		finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1) * invSamples;
-	}
-
-	/* add pixel colour to accumulation buffer (accumulates all samples) */
-	/* inputImage[work_item_id] += finalcolor;*/
-	/* averaged colour: divide colour by the number of calculated frames so far */
-
-	/*union Colour fcolor;
-	fcolor.components = (uchar4)(
-		(unsigned char)(tempcolor.x * 255),
-		(unsigned char)(tempcolor.y * 255),
-		(unsigned char)(tempcolor.z * 255),
-		1);*/
-
-		/* store the pixelcolour in the output buffer */
-		/* output[work_item_id] = (float3)(x_coord, y_coord, fcolor.c);*/
-	float4 colorf4 = (float4)(0.0f, 0.0f, 0.0f, 1.0f);
-	colorf4.x = finalcolor.x;
-	colorf4.y = finalcolor.y;
-	colorf4.z = finalcolor.z;
-
-	if (reset == 1)
-	{
-		if (x_coord < 100 || x_coord > 800) colorf4 = (float4)((float)seed0 / 1000, 0.0f, 0.0f, 1.0f);
-		write_imagef(outputImage, pixel, colorf4);
-	}
-	else
-	{
-		float4 prev_color = read_imagef(inputImage, sampler, pixel);
-		int num_passes = prev_color.w;
-
-		colorf4 += (prev_color * num_passes);
-		colorf4 /= (num_passes + 1);
-		colorf4.w = num_passes + 1;
-		if (x_coord < 100 || x_coord > 800) colorf4 = (float4)(0.0f, (float)seed0 / 1000, 0.0f, 1.0f);
 		write_imagef(outputImage, pixel, colorf4);
 	}
 }

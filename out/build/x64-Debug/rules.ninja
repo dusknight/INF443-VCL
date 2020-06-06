@@ -14,7 +14,7 @@
 #############################################
 # localized /showIncludes string
 
-msvc_deps_prefix = Note: including file: 
+msvc_deps_prefix = 注意: 包含文件:  
 
 
 #############################################
@@ -47,7 +47,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\chang\source\repos\INF443-VCL -BC:\Users\chang\source\repos\INF443-VCL\out\build\x64-Debug
+  command = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\Shikang\source\repos\INF443-VCL -BC:\Users\Shikang\source\repos\INF443-VCL\out\build\x64-Debug
   description = Re-running CMake...
   generator = 1
 

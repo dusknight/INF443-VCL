@@ -29,4 +29,5 @@ private:
     void clearValues();
     std::string getMatFileName(std::string filepath);
     std::vector<TriangleCPU> cpu_tri_list;
+    const char* HDRmapname;
 };
