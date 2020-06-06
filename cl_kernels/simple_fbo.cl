@@ -44,11 +44,26 @@ uint wang_hash(uint seed)
     return seed;
 }
 
+float dai_float_01(uint seed)
+{
+	seed = wang_hash(seed);
+	seed = seed ^ 7 % 50600202;
+	seed = (float)seed / 50600202.1;
+	return seed;
+}
+
+int dai_int_05(uint seed)
+{
+	seed = wang_hash(seed);
+
+	return ((int)seed % 10) - 5;
+}
+
 static float get_random(unsigned int* seed0, unsigned int* seed1) {
 
 	/* hash the seeds using bitwise AND operations and bitshifts */
-	*seed0 = 36969 * ((*seed0) & 65535) + ((*seed0) >> 16);
-	*seed1 = 18000 * ((*seed1) & 65535) + ((*seed1) >> 16);
+	*seed0 = 36969 * ((*seed0) & 2147483641) + ((*seed0) >> 16);
+	*seed1 = 18000 * ((*seed1) & 2147483641) + ((*seed1) >> 16);
 
 	unsigned int ires = ((*seed0) << 16) + (*seed1);
 
@@ -62,7 +77,7 @@ static float get_random(unsigned int* seed0, unsigned int* seed1) {
 	return (res.f - 2.0f) / 2.0f;
 }
 
-Ray createCamRay(const int x_coord, const int y_coord, const int width, const int height, __constant Camera* cam, const int* seed0, const int* seed1) {
+Ray createCamRay(const float x_coord, const float y_coord, const int width, const int height, __constant Camera* cam, const int* seed0, const int* seed1) {
 
 	/* create a local coordinate frame for the camera */
 	float3 rendercamview = cam->view; rendercamview = normalize(rendercamview);
@@ -77,8 +92,8 @@ Ray createCamRay(const int x_coord, const int y_coord, const int width, const in
 	unsigned int x = x_coord;
 	unsigned int y = y_coord;
 
-	int pixelx = x_coord;
-	int pixely = height - y_coord - 1;
+	float pixelx = x_coord;
+	float pixely = height - y_coord - 1;
 
 	float sx = (float)pixelx / (width - 1.0f);
 	float sy = (float)pixely / (height - 1.0f);
@@ -189,10 +204,9 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 	float3 accum_color = (float3)(0.0f, 0.0f, 0.0f);
 	float3 mask = (float3)(1.0f, 1.0f, 1.0f);
 	int* randSeed0 = seed0;
-	int*
-		randSeed1 = seed1;
+	int* randSeed1 = seed1;
 
-	for (int bounces = 0; bounces < 8; bounces++) {
+	for (int bounces = 0; bounces < 20; bounces++) {
 
 		float t;   /* distance to intersection */
 		int hitsphere_id = 0; /* index of intersected sphere */
@@ -204,7 +218,7 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 		/* if ray misses scene, return background colour */
 		if (!intersect_scene(spheres, &ray, &t, &hitsphere_id, sphere_count))
-			return accum_color += mask * (float3)(0.15f, 0.15f, 0.25f);
+			return accum_color += mask * (float3)(0.15f, 0.15f, 0.15f);
 
 		/* else, we've got a hit! Fetch the closest hit sphere */
 		Sphere hitsphere = spheres[hitsphere_id]; /* version with local copy of sphere */
@@ -267,8 +281,8 @@ render_kernel(
 	int2 pixel = (int2) (x_coord, y_coord);
 	int2 real_pixel = (int2) (x_coord, img_height-y_coord);
 
-	unsigned int seed0 = x_coord * framenumber % 1000 + (random0 * 100);
-	unsigned int seed1 = y_coord * framenumber % 1000 + (random1 * 100);
+	unsigned int seed0 = x_coord * framenumber % 20081931 + (random0 * 97);
+	unsigned int seed1 = y_coord * framenumber % 20081931 + (random1 * 97);
 
 	float fx = (float)x_coord / (float)width;  /* convert int in range [0 - width] to float in range [0-1] */
 	float fy = (float)y_coord / (float)height; /* convert int in range [0 - height] to float in range [0-1] */
@@ -280,8 +294,19 @@ render_kernel(
 	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
 	float invSamples = 1.0f / SAMPLES;
 
-	for (int i = 0; i < SAMPLES; i++)
-		finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1) * invSamples;
+	int supersamplenumber = 16;
+	uint seedsupersampling = 2021;
+	for (int j = 0; j < supersamplenumber; j++) {
+		float offsetdaix = dai_float_01(seedsupersampling) / (img_width + 0.113);
+		seedsupersampling = wang_hash(seedsupersampling);
+		float offsetdaiy = dai_float_01(seedsupersampling) / (img_height + 0.113);
+		seedsupersampling = wang_hash(seedsupersampling);
+		struct Ray camray = createCamRay(x_coord + offsetdaix, y_coord + offsetdaiy, width, height, cam, &seed0, &seed1);
+		for (int i = 0; i < SAMPLES; i++) {
+			finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1) * invSamples;
+		}
+	}
+	finalcolor = finalcolor / supersamplenumber;
 
 
 	float4 colorf4 = (float4)(0.0f, 0.0f, 0.0f, 1.0f);
