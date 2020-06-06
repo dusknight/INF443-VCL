@@ -33,13 +33,17 @@ typedef struct Camera {
 	float focalDistance;
 } Camera;
 
-
+/* Rignt Hand Systeme (Determinant>0)*/
 typedef struct Triangle {
 	float3 vertex1;
 	float3 vertex2;
 	float3 vertex3;
 	float3 nvector;
 }Triangle;
+
+float determinant3d(float3 v1, float3 v2, float3 v3){
+	return v1[0]*( v2[1]* v3[2]- v3[1]*v2[2]) - v2[0]*(v1[1]*v3[2]-v3[1]*v1[2]) + v3[0]*(v1[1]*v2[2]-v2[1]*v1[2])
+}
 
 uint wang_hash(uint seed)
 /*See http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/ */
