@@ -249,7 +249,7 @@ void initScene(Sphere* cpu_spheres) {
     cpu_spheres[2].radius = 0.16f;
     cpu_spheres[2].position = Vector3Df(0.25f, -0.24f, 0.1f);
     cpu_spheres[2].color = Vector3Df(0.7f, 0.7f, 0.7f);
-    cpu_spheres[2].emission = Vector3Df(0.0f, 0.0f, 0.0f);
+    cpu_spheres[2].emission = Vector3Df(8.0f, 0.0f, 0.0f);
 
     // lightsource
     cpu_spheres[3].radius = 1.0f;
