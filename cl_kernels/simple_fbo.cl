@@ -33,6 +33,14 @@ typedef struct Camera {
 	float focalDistance;
 } Camera;
 
+
+typedef struct Triangle {
+	float3 vertex1;
+	float3 vertex2;
+	float3 vertex3;
+	float3 nvector;
+}Triangle;
+
 uint wang_hash(uint seed)
 /*See http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/ */
 {
@@ -192,6 +200,11 @@ bool intersect_scene(__constant Sphere* spheres, const Ray* ray, float* t, int* 
 }
 
 
+
+
+
+
+
 /* the path tracing function */
 /* computes a path (starting from the camera) with a defined number of bounces, accumulates light/color at each bounce */
 /* each ray hitting a surface will be reflected in a random direction (by randomly sampling the hemisphere above the hitpoint) */
@@ -218,7 +231,7 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 		/* if ray misses scene, return background colour */
 		if (!intersect_scene(spheres, &ray, &t, &hitsphere_id, sphere_count))
-			return accum_color += mask * (float3)(0.15f, 0.15f, 0.15f);
+			return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 
 		/* else, we've got a hit! Fetch the closest hit sphere */
 		Sphere hitsphere = spheres[hitsphere_id]; /* version with local copy of sphere */

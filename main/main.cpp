@@ -186,26 +186,26 @@ void initScene(Sphere* cpu_spheres) {
      // floor
     cpu_spheres[0].radius = 200.0f;
     cpu_spheres[0].position = { 0.0f, -200.4f, 0.0f };
-    cpu_spheres[0].color = { 0.9f, 0.3f, 0.0f };
-    cpu_spheres[0].emission = { 0.0f, 0.0f, 0.0f };
+    cpu_spheres[0].color = { 0.25f, 0.2f, 0.23f };
+    cpu_spheres[0].emission = { 0.1f, 0.1f, 0.1f };
 
     // left sphere
     cpu_spheres[1].radius = 0.16f;
     cpu_spheres[1].position = { -0.25f, -0.24f, -0.1f };
-    cpu_spheres[1].color = { 0.9f, 0.8f, 0.7f };
+    cpu_spheres[1].color = { 0.5f, 0.6f, 0.3f };
     cpu_spheres[1].emission = { 0.0f, 0.0f, 0.0f };
 
     // right sphere
     cpu_spheres[2].radius = 0.16f;
     cpu_spheres[2].position = { 0.25f, -0.24f, 0.1f };
-    cpu_spheres[2].color = { 0.9f, 0.8f, 0.7f };
-    cpu_spheres[2].emission = { 0.0f, 0.0f, 0.0f };
+    cpu_spheres[2].color = { 0.05f, 0.2f, 0.3f };
+    cpu_spheres[2].emission = { 0.02f, 0.0f, 0.0f };
 
     // lightsource
-    cpu_spheres[3].radius = 1.0f;
-    cpu_spheres[3].position = { 0.0f, 1.36f, 0.0f };
+    cpu_spheres[3].radius = 0.6f;
+    cpu_spheres[3].position = { 0.0f, 0.85f, 0.0f };
     cpu_spheres[3].color = { 0.0f, 0.0f, 0.0f };
-    cpu_spheres[3].emission = { 9.0f, 8.0f, 6.0f };
+    cpu_spheres[3].emission = { 5.0f, 1.0f, 2.0f };
 }
 
 
