@@ -7,6 +7,9 @@ __constant float EPSILON = 0.00003f; /* req2uired to compensate for limited floa
 __constant float PI = 3.14159265359f;
 __constant int SAMPLES = 4;
 
+__constant int HDRwidth = 3200;
+__constant int HDRheight = 1600;
+
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
 CLK_ADDRESS_CLAMP_TO_EDGE |
 CLK_FILTER_NEAREST;
@@ -257,7 +260,7 @@ bool intersect_scene(__constant Sphere* spheres, const Ray* ray, float* t, int* 
 /* each ray hitting a surface will be reflected in a random direction (by randomly sampling the hemisphere above the hitpoint) */
 /* small optimisation: diffuse ray directions are calculated using cosine weighted importance sampling */
 
-float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_count, const int* seed0, const int* seed1) {
+float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_count, const int* seed0, const int* seed1, __constant float4* HDRimg) {
 
 	Ray ray = *camray;
 
@@ -278,7 +281,32 @@ float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_cou
 
 		/* if ray misses scene, return background colour */
 		if (!intersect_scene(spheres, &ray, &t, &hitsphere_id, sphere_count))
+			// return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
+		{
+			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
+			longlatX = longlatX < 0.f ? longlatX + 2*PI : longlatX;  // wrap around full circle if negative
+			float longlatY = acos(ray.dir.y); // add RotateMap at some point, see Fragmentarium
+
+			// map theta and phi to u and v texturecoordinates in [0,1] x [0,1] range
+			float offsetY = 0.5f;
+			float u = longlatX / 2 * PI; // +offsetY;
+			float v = longlatY / PI;
+
+			// map u, v to integer coordinates
+			int u2 = (int)(u * HDRwidth); //% HDRwidth;
+			int v2 = (int)(v * HDRheight); // % HDRheight;
+
+			// compute the texel index in the HDR map 
+			int HDRtexelidx = u2 + v2 * HDRwidth;
+
+			float4 HDRcol = HDRimg[HDRtexelidx];
+			//float4 HDRcol = tex1Dfetch(HDRtexture, HDRtexelidx);  // fetch from texture
+			// float3 HDRcol2 = { HDRcol.x, HDRcol.y, HDRcol.z };
+			// return (u, v, offsetY);
 			return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
+			return HDRcol.xyz;
+			// return accum_color += (mask * HDRcol.xyz);
+		}
 
 		/* else, we've got a hit! Fetch the closest hit sphere */
 		Sphere hitsphere = spheres[hitsphere_id]; /* version with local copy of sphere */
@@ -329,7 +357,7 @@ render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
 	__constant Sphere* spheres, const int width, const int height,
 	const int sphere_count, const int framenumber, __constant const Camera* cam,
-	float random0, float random1)
+	float random0, float random1, __constant const float4* HDRimg)
 {
 	const uint hashedframenumber = wang_hash(framenumber);
 	const int img_width = get_image_width(outputImage);
@@ -363,7 +391,7 @@ render_kernel(
 		seedsupersampling = wang_hash(seedsupersampling);
 		struct Ray camray = createCamRay(x_coord + offsetdaix, y_coord + offsetdaiy, width, height, cam, &seed0, &seed1);
 		for (int i = 0; i < SAMPLES; i++) {
-			finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1) * invSamples;
+			finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1, HDRimg) * invSamples;
 		}
 	}
 	finalcolor = finalcolor / supersamplenumber;

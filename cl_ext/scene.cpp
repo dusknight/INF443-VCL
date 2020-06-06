@@ -11,7 +11,7 @@
 #include <algorithm>
 #include "vcl/math/math.hpp"
 
-const char* HDRmapname = "data/Topanga_Forest_B_3k.hdr";
+// const char* HDRmapname = "data/Topanga_Forest_B_3k.hdr";
 
 Scene::Scene()
 {
