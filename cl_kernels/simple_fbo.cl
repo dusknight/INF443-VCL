@@ -257,7 +257,7 @@ bool intersect_scene(__constant Sphere* spheres, const Ray* ray, float* t, int* 
 /* each ray hitting a surface will be reflected in a random direction (by randomly sampling the hemisphere above the hitpoint) */
 /* small optimisation: diffuse ray directions are calculated using cosine weighted importance sampling */
 
-float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_count, const int* seed0, const int* seed1) {
+float3 trace(__constant Sphere* spheres, const Ray* camray, const int sphere_count, const int* seed0, const int* seed1, __constant float4* HDRimg) {
 
 	Ray ray = *camray;
 
@@ -329,7 +329,7 @@ render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
 	__constant Sphere* spheres, const int width, const int height,
 	const int sphere_count, const int framenumber, __constant const Camera* cam,
-	float random0, float random1)
+	float random0, float random1, __constant const float4* HDRimg)
 {
 	const uint hashedframenumber = wang_hash(framenumber);
 	const int img_width = get_image_width(outputImage);
@@ -363,7 +363,7 @@ render_kernel(
 		seedsupersampling = wang_hash(seedsupersampling);
 		struct Ray camray = createCamRay(x_coord + offsetdaix, y_coord + offsetdaiy, width, height, cam, &seed0, &seed1);
 		for (int i = 0; i < SAMPLES; i++) {
-			finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1) * invSamples;
+			finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1, HDRimg) * invSamples;
 		}
 	}
 	finalcolor = finalcolor / supersamplenumber;

@@ -294,7 +294,7 @@ void cl_manager::initOpenCL()
 
     // Convert the OpenCL source code to a string// Convert the OpenCL source code to a string
     string source;
-    ifstream file("../../../cl_kernels/cornell_box.cl");
+    ifstream file("../../../cl_kernels/simple_fbo.cl");
     streamoff len;
     if (!file) {
         cout << "\nNo OpenCL file found!" << endl << "Exiting..." << endl;
@@ -357,6 +357,7 @@ void cl_manager::initCLKernel(int buffer_switch, int buffer_reset, int window_wi
     // kernel.setArg(8, cl_camera);
     kernel.setArg(9, rand());
     kernel.setArg(10, rand());
+    kernel.setArg(11, hdr_buffer);
 }
 
 bool cl_manager::setupBufferBVH(vector<BVHNodeGPU>& bvh_data, float bvh_size, float scene_size) {
@@ -399,11 +400,11 @@ bool cl_manager::setupBufferMat(vector<Material>& mat_data) {
     return true;
 }
 
-bool cl_manager::setupBUfferHDR(HDRImage& img)
+bool cl_manager::setupBUfferHDR(cl_float4 * cpu_HDR, int height, int width)
 {
     cl_int err = 0;
     bvh_buffer = cl::Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
-        sizeof(float) * img.height * img.width, img.colors, &err);
+        sizeof(cl_float4) * height * width, cpu_HDR, &err);
     if (!err)  return true;
     return false;
 }

@@ -42,7 +42,7 @@ using namespace std;
 using namespace cl;
 
 const int sphere_count = 4;
-const char* HDRmapname = "data/Topanga_Forest_B_3k.hdr";
+const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
 
 // OpenCL objects
 cl_manager cl_mgr;
@@ -114,8 +114,8 @@ void initHDR(cl_manager cl_mgr) {
     int HDRwidth = HDRresult.width;
     int HDRheight = HDRresult.height;
 
-    cl_mgr.setupBUfferHDR(HDRresult);
-    cpuHDRenv = new Vec4f[HDRwidth * HDRheight];
+    
+    cl_float4 * cpuHDRenv = new cl_float4[HDRwidth * HDRheight];
     //_data = new RGBColor[width*height];
 
     for (int i = 0; i < HDRwidth; i++) {
@@ -123,13 +123,13 @@ void initHDR(cl_manager cl_mgr) {
             int idx = 3 * (HDRwidth * j + i);
             //int idx2 = width*(height-j-1)+i;
             int idx2 = HDRwidth * (j)+i;
-            cpuHDRenv[idx2] = Vec4f(HDRresult.colors[idx], HDRresult.colors[idx + 1], HDRresult.colors[idx + 2], 0.0f);
+            cpuHDRenv[idx2] = { HDRresult.colors[idx], HDRresult.colors[idx + 1], HDRresult.colors[idx + 2], 0.0f };
         }
     }
 
-    // copy HDR map to CUDA
-    cudaMalloc(&gpuHDRenv, HDRwidth * HDRheight * sizeof(float4));
-    cudaMemcpy(gpuHDRenv, cpuHDRenv, HDRwidth * HDRheight * sizeof(float4), cudaMemcpyHostToDevice);
+    cl_mgr.setupBUfferHDR(cpuHDRenv, HDRheight, HDRwidth);
+    // copy HDR map to CL
+    cl_mgr.queue.enqueueWriteBuffer(cl_mgr.hdr_buffer, CL_TRUE, 0, sizeof(cl_float4)*HDRwidth*HDRheight, cpuHDRenv, 0);  // TODO: do we really need it?
 }
 
 
@@ -369,7 +369,8 @@ int main()
     
     // initialise OpenCL
     cl_mgr.initOpenCL();
-
+    // create HDR
+    initHDR(cl_mgr);
     // create FBO
     setupBufferFBO();  // first GL
     // createVBO(&vbo);

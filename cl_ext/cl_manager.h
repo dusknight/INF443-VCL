@@ -65,6 +65,6 @@ public:
 
 	bool setupBufferMat(vector<Material>& mat_data);
 
-	bool setupBUfferHDR(HDRImage& img);
+	bool setupBUfferHDR(cl_float4* cpu_HDR, int height, int width);
 
 };

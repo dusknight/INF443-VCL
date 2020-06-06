@@ -82,3 +82,13 @@
 1084	1311	613153533	pgm.exe	3fc85124be862867
 7	1143	613153775	CMakeFiles/pgm.dir/cl_ext/cl_manager.cpp.obj	20479dbe965b3812
 1145	1352	613153775	pgm.exe	3fc85124be862867
+11	1119	613161410	CMakeFiles/pgm.dir/cl_ext/scene.cpp.obj	6060480f0353f147
+14	1369	613161411	CMakeFiles/pgm.dir/main/main.cpp.obj	53832742c228cde
+7	1435	613161411	CMakeFiles/pgm.dir/cl_ext/cl_manager.cpp.obj	20479dbe965b3812
+6	110	613161421	CMakeFiles/pgm.dir/cl_ext/data/HDRloader.cpp.obj	2249b9169f3b45b
+7	663	613161455	CMakeFiles/pgm.dir/cl_ext/scene.cpp.obj	6060480f0353f147
+664	945	613161455	pgm.exe	297131ccc998e46a
+7	1092	613161480	CMakeFiles/pgm.dir/cl_ext/cl_manager.cpp.obj	20479dbe965b3812
+1095	1290	613161481	pgm.exe	297131ccc998e46a
+6	1229	613161571	CMakeFiles/pgm.dir/cl_ext/cl_manager.cpp.obj	20479dbe965b3812
+1231	1415	613161571	pgm.exe	297131ccc998e46a
