@@ -79,8 +79,8 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
     cpu_spheres[3].radius = 200.0f;
     cpu_spheres[3].materialPara = 1;
     cpu_spheres[3].position = { 0.0f, -203.3f, 0.0f };
-    cpu_spheres[3].color = { 0.2f, 0.3f, 0.7f };
-    cpu_spheres[3].emission = { 0.0f, 0.0f, 0.0f };
+    cpu_spheres[3].color = { 0.1f, 0.3f, 0.7f };
+    cpu_spheres[3].emission = { 0.3f, 0.2f, 0.0f };
     
     //// left sphere
     cpu_spheres[1].radius = 0.15f;
@@ -115,7 +115,7 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
     cpu_spheres[5].materialPara = 1;
     cpu_spheres[5].position = { 0.0f, 0.62f, -0.0f };
     cpu_spheres[5].color = { 0.85f, 0.7f, 0.1f };
-    cpu_spheres[5].emission = { 5.05f, 1.05f, 1.03f };
+    cpu_spheres[5].emission = { 0.75f, 0.35f, 0.13f };
 
     cpu_triangles[0].vertex1 = { 1.1f, -0.5f, 0.0f };
     cpu_triangles[0].vertex2 = { -1.1f, -0.5f, 0.0f };
