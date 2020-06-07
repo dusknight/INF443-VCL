@@ -456,7 +456,7 @@ bool intersect_scene(__constant Sphere* spheres, __constant Triangle* triangles,
 /* each ray hitting a surface will be reflected in a random direction (by randomly sampling the hemisphere above the hitpoint) */
 /* small optimisation: diffuse ray directions are calculated using cosine weighted importance sampling */
 
-float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* camray, const int sphere_count, const int triangle_count, int* seed0,  int* seed1, __read_only image2d_t HDRimg) {
+float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* camray, const int sphere_count, const int triangle_count, int* seed0,  int* seed1, __constant float4* HDRimg) {
 	HITRECORD hitrecord;
 	Ray ray = *camray;
 
@@ -479,7 +479,7 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 		if (!intersect_scene(spheres, triangles, &ray, &t, &hitsphere_id, &triangle_id, sphere_count, triangle_count, &hitrecord, seed0, seed1))
 			//return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 		{
-			return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
+			// return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
 			longlatX = longlatX < 0.f ? longlatX + 2 * PI : longlatX;  // wrap around full circle if negative
 			float longlatY = acos(ray.dir.y); // add RotateMap at some point, see Fragmentarium
@@ -495,7 +495,7 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 			// compute the texel index in the HDR map 
 			int HDRtexelidx = u2 + v2 * HDRwidth;
 
-			float4 HDRcol  = read_imagef(HDRimg, sampler, (int2)(0, 0));
+			float4 HDRcol = HDRimg[HDRtexelidx];
 			return accum_color += (mask * HDRcol.xyz);
 		}
 
@@ -547,8 +547,7 @@ render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
 	__constant Sphere* spheres, __constant Triangle* triangles, const int width, const int height,
 	const int sphere_count, const int triangle_count, const int framenumber, __constant const Camera* cam,
-	float random0, float random1, 
-	__read_only image2d_t HDRimg)
+	float random0, float random1, __constant float4* HDRimg)
 {
 	const uint hashedframenumber = wang_hash(framenumber);
 	const int img_width = get_image_width(outputImage);
@@ -595,7 +594,6 @@ render_kernel(
 
 
 	if (reset == 1){
-		colorf4 = read_imagef(HDRimg, sampler, pixel);
 		write_imagef(outputImage, pixel, colorf4);
 	}
 	else{
@@ -605,7 +603,6 @@ render_kernel(
 		colorf4 += (prev_color * num_passes);
 		colorf4 /= (num_passes + 1);
 		colorf4.w = num_passes + 1;
-		colorf4 = read_imagef(HDRimg, sampler, pixel);
 		write_imagef(outputImage, pixel, colorf4);
 	}
 }

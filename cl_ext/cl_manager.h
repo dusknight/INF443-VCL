@@ -46,8 +46,8 @@ public:
 	cl::Buffer bvh_buffer;
 	cl::Buffer vtx_buffer;
 	cl::Buffer mat_buffer;
-	// cl::Buffer hdr_buffer;
-	cl::Image2D hdr_buffer;
+	cl::Buffer hdr_buffer;
+
 	void setup_dev(cl_context_properties* properties, cl_device_id device_id, cl_platform_id platform_id);
 
 	void pickDevice(const std::vector<cl::Device>& devices);

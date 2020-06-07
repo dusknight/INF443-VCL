@@ -417,8 +417,8 @@ int main()
             cpuHDRenv[idx2] = { HDRresult.colors[idx], HDRresult.colors[idx + 1], HDRresult.colors[idx + 2], 0.0f };
         }
     }
-    // cl_mgr.hdr_buffer = cl::Buffer(cl_mgr.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(cl_float4) * HDRwidth * HDRheight, cpuHDRenv, &err);
-    cl_mgr.hdr_buffer = cl::Image2D(cl_mgr.context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, cl::ImageFormat(CL_RGB, CL_FLOAT), HDRwidth, HDRheight, 0, HDRresult.colors, &err);
+    cl_mgr.hdr_buffer = cl::Buffer(cl_mgr.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(cl_float4) * HDRwidth * HDRheight, cpuHDRenv, &err);
+
     // hostRendercam = (Camera*) queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
     
     // clEnqueueMapBuffer
