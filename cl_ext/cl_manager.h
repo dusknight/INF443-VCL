@@ -39,6 +39,7 @@ public:
 	cl::Program program;
 	cl::Buffer cl_output;
 	cl::Buffer cl_spheres;
+	cl::Buffer cl_triangles;
 	cl::Buffer cl_camera;
 	cl::Buffer cl_accumbuffer;
 	vector<cl::Memory> image_buffers;

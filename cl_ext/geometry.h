@@ -9,10 +9,24 @@
 struct Sphere
 {
 	float radius;
-	int dummy1;
+	int materialPara;
+	int dummy1;;
 	float dummy2;
-	float dummy3;
 	cl_float3 position;
 	cl_float3 color;
 	cl_float3 emission;
 }; 
+
+struct Triangle {
+	cl_float3 vertex1;
+	cl_float3 vertex2;
+	cl_float3 vertex3;
+	int materialPara;
+	cl_float3 color;
+	cl_float3 emission;
+	float dummy1;
+	float dummy2;
+	int dummy0;
+	cl_float3 dummy3;
+	cl_float3 dummy4;
+};

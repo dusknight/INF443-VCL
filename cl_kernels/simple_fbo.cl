@@ -23,7 +23,6 @@ typedef struct HITRECORD{
 	float3 p;
 	float3 normal;
 	int materialPara;
-	int typePara;
 	float hittime;
 	float3 color;
 	float3 emission;
@@ -31,6 +30,7 @@ typedef struct HITRECORD{
 /* typePara: 0 means Sphere, 1 means triangle. materialPara: 0 means lambertian, 1 means metal*/
 typedef struct Sphere {
 	float radius;
+	int materialPara;
 	float3 pos;
 	float3 color;
 	float3 emission;
@@ -40,7 +40,7 @@ typedef struct Triangle {
 	float3 vertex1;
 	float3 vertex2;
 	float3 vertex3;
-	float3 nvector;
+	int materialPara;
 	float3 color;
 	float3 emission;
 }Triangle;
@@ -66,7 +66,8 @@ typedef struct Camera {
 
 
 float determinant3d(float3 v1, float3 v2, float3 v3) {
-	return v1.x * (v2.y * v3.z - v3.y * v2.z) - v2.x * (v1.y * v3.z - v3.y * v1.z) + v3.x * (v1.y * v2.z - v2.y * v1.z);
+	//return v1.x * (v2.y * v3.z - v3.y * v2.z) - v2.x * (v1.y * v3.z - v3.y * v1.z) + v3.x * (v1.y * v2.z - v2.y * v1.z);
+	return dot(v1, cross(v2, v3));
 }
 void changeOrientation(Triangle* triangle) {
 	if (determinant3d(triangle->vertex1, triangle->vertex2, triangle->vertex3) < 0) {
@@ -76,9 +77,16 @@ void changeOrientation(Triangle* triangle) {
 	}
 }
 
-void TriangleInitialize(Triangle* triangle) {
+float3 getNormalTriangle(Triangle triangle) {
+	if (determinant3d(triangle.vertex1, triangle.vertex2, triangle.vertex3) > 0) {
+		return normalize(cross(triangle.vertex2 - triangle.vertex1, triangle.vertex3 - triangle.vertex1));
+	}
+	else {
+		return -1.0f * normalize(cross(triangle.vertex2 - triangle.vertex1, triangle.vertex3 - triangle.vertex1));
+}
+float3 TriangleInitialize(Triangle* triangle) {
 	changeOrientation(triangle);
-	triangle->nvector = normalize(cross(triangle->vertex2 - triangle->vertex1, triangle->vertex3 - triangle->vertex1));
+	return normalize(cross(triangle->vertex2 - triangle->vertex1, triangle->vertex3 - triangle->vertex1));
 }
 
 
@@ -249,6 +257,27 @@ void diffuse_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECORD* 
 	ray->dir = newdir;
 }
 
+void reflect_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
+	*seed0 += 998;
+	*seed1 += 233;
+	hitrecord->color = sphere.color;
+	hitrecord->emission = sphere.emission;
+
+	float3 hitpoint = ray->origin + ray->dir * TIMEintersection;
+	hitrecord->hittime = TIMEintersection;
+	hitrecord->p = hitpoint;
+
+	float3 normal = normalize(hitpoint - sphere.pos);
+	float3 normal_facing = dot(normal, ray->dir) < 0.0f ? normal : normal * (-1.0f);
+	hitrecord->normal = normal_facing;
+
+	float3 newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
+
+	ray->origin = hitpoint + normal_facing * EPSILON;
+	ray->dir = newdir;
+
+}
+
 float intersect_triangle(const Triangle* triangle, Ray* ray)
 {
 	float3 vec_test = triangle->vertex1 - ray->origin;
@@ -279,7 +308,62 @@ float intersect_triangle(const Triangle* triangle, Ray* ray)
 
 }
 
-bool intersect_scene(__constant Sphere* spheres, Ray* ray, float* t, int* sphere_id, const int sphere_count, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1)
+void diffuse_triangle(Triangle triangle, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
+	*seed0 += 1;
+	*seed1 += 233;
+
+	hitrecord->color = triangle.color;
+	hitrecord->emission = triangle.emission;
+
+	float3 hitpoint = ray->origin + ray->dir * TIMEintersection;
+	hitrecord->hittime = TIMEintersection;
+	hitrecord->p = hitpoint;
+
+	float3 normal = getNormalTriangle(triangle);
+	float3 normal_facing = dot(normal, ray->dir) < 0.0f ? normal : normal * (-1.0f);
+	hitrecord->normal = normal_facing;
+
+	float rand1 = get_random(seed0, seed1) * 2.0f * PI;
+	float rand2 = get_random(seed1, seed0);
+	float rand2s = sqrt(rand2);
+
+	/* create a local orthogonal coordinate frame centered at the hitpoint */
+	float3 w = normal_facing;
+	float3 axis = fabs(w.x) > 0.1f ? (float3)(0.0f, 1.0f, 0.0f) : (float3)(1.0f, 0.0f, 0.0f);
+	float3 u = normalize(cross(axis, w));
+	float3 v = cross(w, u);
+
+	float3 newdir = normalize(u * cos(rand1) * rand2s + v * sin(rand1) * rand2s + w * sqrt(1.0f - rand2));
+
+	/* add a very small offset to the hitpoint to prevent self intersection */
+	ray->origin = hitpoint + normal_facing * EPSILON;
+	ray->dir = newdir;
+}
+
+void reflect_triangle(Sphere triangle, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
+	*seed0 += 333;
+	*seed1 += 64;
+
+	hitrecord->color = triangle.color;
+	hitrecord->emission = triangle.emission;
+
+	float3 hitpoint = ray->origin + ray->dir * TIMEintersection;
+	hitrecord->hittime = TIMEintersection;
+	hitrecord->p = hitpoint;
+
+	float3 normal = normalize(hitpoint - sphere.pos);
+	float3 normal_facing = dot(normal, ray->dir) < 0.0f ? normal : normal * (-1.0f);
+	hitrecord->normal = normal_facing;
+
+	float3 newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
+
+	ray->origin = hitpoint + normal_facing * EPSILON;
+	ray->dir = newdir;
+}
+
+
+
+bool intersect_scene(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ray, float* t, int* sphere_id, int* triangle_id, const int sphere_count, const int triangle_count, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1)
 {
 	/* initialise t to a very large number,
 	so t will be guaranteed to be smaller
@@ -292,6 +376,10 @@ bool intersect_scene(__constant Sphere* spheres, Ray* ray, float* t, int* sphere
 	float inf = 1e20f;
 	*t = inf;
 
+	float temp_sphere = 1e20f;
+	float temp_triangle = 1e20f;
+	int type = 3;
+
 	/* check if the ray intersects each sphere in the scene */
 	for (int i = 0; i < sphere_count; i++) {
 
@@ -300,13 +388,55 @@ bool intersect_scene(__constant Sphere* spheres, Ray* ray, float* t, int* sphere
 		/* float hitdistance = intersect_sphere(&spheres[i], ray); */
 		float hitdistance = intersect_sphere(&sphere, ray);
 		/* keep track of the closest intersection and hitobject found so far */
-		if (hitdistance != 0.0f && hitdistance < *t) {
-			*t = hitdistance;
+		if (hitdistance != 0.0f && hitdistance < temp_sphere) {
+			temp_sphere = hitdistance;
 			*sphere_id = i;
 		}
 	}
+
+	for (int i = 0; i < triangle_count; i++) {
+
+		Triangle triangle = triangles[i]; /* create local copy of sphere */
+
+		/* float hitdistance = intersect_sphere(&spheres[i], ray); */
+		float hitdistance = intersect_triangle(&sphere, ray);
+		/* keep track of the closest intersection and hitobject found so far */
+		if (hitdistance != 0.0f && hitdistance < temp_triangle) {
+			temp_triangle = hitdistance;
+			*triangle_id = i;
+		}
+	}
+
+	if (temp_sphere < temp_triangle) {
+		*t = temp_sphere;
+		type = 0;
+	}
+	else {
+		*t = temp_triangle;
+		type = 1;
+	}
+
+
+
 	if (*t < inf) {
-		diffuse_sphere(spheres[*sphere_id], ray, *t, hitrecord, seed0, seed1);
+		if (type == 0) {
+			hitrecord->materialPara = spheres[*sphere_id].materialPara;
+			if (hitrecord->materialPara == 0) {
+				diffuse_sphere(spheres[*sphere_id], ray, *t, hitrecord, seed0, seed1);
+			}
+			if (hitrecord->materialPara == 1) {
+				reflect_sphere(spheres[*sphere_id], ray, *t, hitrecord, seed0, seed1);
+			}
+		}
+		if (type == 1) {
+			hitrecord->materialPara = triangles[*triangle_id].materialPara;
+			if (hitrecord->materialPara == 0) {
+				diffuse_triangle(triangles[*triangle_id], ray, *t, hitrecord, seed0, seed1);
+			}
+			if (hitrecord->materialPara == 1) {
+				reflect_triangle(triangles[*triangle_id], ray, *t, hitrecord, seed0, seed1);
+			}
+		}
 	}
 	return *t < inf; /* true when ray interesects the scene */
 }
@@ -322,7 +452,7 @@ bool intersect_scene(__constant Sphere* spheres, Ray* ray, float* t, int* sphere
 /* each ray hitting a surface will be reflected in a random direction (by randomly sampling the hemisphere above the hitpoint) */
 /* small optimisation: diffuse ray directions are calculated using cosine weighted importance sampling */
 
-float3 trace(__constant Sphere* spheres, Ray* camray, const int sphere_count,  int* seed0,  int* seed1, __constant float4* HDRimg) {
+float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* camray, const int sphere_count, const int triangle_count, int* seed0,  int* seed1, __constant float4* HDRimg) {
 	HITRECORD hitrecord;
 	Ray ray = *camray;
 
@@ -335,14 +465,14 @@ float3 trace(__constant Sphere* spheres, Ray* camray, const int sphere_count,  i
 
 		float t;   /* distance to intersection */
 		int hitsphere_id = 0; /* index of intersected sphere */
-
+		int triangle_id = 0;
 		/* update random number seeds for each bounce */
 		/*randSeed0 += 1; */
 		/*randSeed1 += 345;*/
 
 
 		/* if ray misses scene, return background colour */
-		if (!intersect_scene(spheres, &ray, &t, &hitsphere_id, sphere_count, &hitrecord, seed0, seed1))
+		if (!intersect_scene(spheres, triangles, &ray, &t, &hitsphere_id, &triangle_id, sphere_count, triangle_count, &hitrecord, seed0, seed1))
 			//return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 		{
 			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
@@ -364,7 +494,7 @@ float3 trace(__constant Sphere* spheres, Ray* camray, const int sphere_count,  i
 			//float4 HDRcol = tex1Dfetch(HDRtexture, HDRtexelidx);  // fetch from texture
 			// float3 HDRcol2 = { HDRcol.x, HDRcol.y, HDRcol.z };
 			// return (u, v, offsetY);
-			return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
+			return accum_color += mask * (float3)(0.95f, 0.95f, 0.95f);
 			return HDRcol.xyz;
 			// return accum_color += (mask * HDRcol.xyz);	
 		}
