@@ -403,7 +403,7 @@ bool cl_manager::setupBufferMat(vector<Material>& mat_data) {
 bool cl_manager::setupBUfferHDR(cl_float4 * cpu_HDR, int height, int width)
 {
     cl_int err = 0;
-    bvh_buffer = cl::Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
+    hdr_buffer = cl::Buffer(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
         sizeof(cl_float4) * height * width, cpu_HDR, &err);
     if (!err)  return true;
     return false;

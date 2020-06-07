@@ -127,9 +127,10 @@ void initHDR(cl_manager cl_mgr) {
         }
     }
 
-    cl_mgr.setupBUfferHDR(cpuHDRenv, HDRheight, HDRwidth);
+    int err = cl_mgr.setupBUfferHDR(cpuHDRenv, HDRheight, HDRwidth);
     // copy HDR map to CL
-    cl_mgr.queue.enqueueWriteBuffer(cl_mgr.hdr_buffer, CL_TRUE, 0, sizeof(cl_float4)*HDRwidth*HDRheight, cpuHDRenv, 0);  // TODO: do we really need it?
+    cl_mgr.queue.enqueueWriteBuffer(cl_mgr.hdr_buffer, CL_TRUE, 0, sizeof(cl_float4)*HDRwidth*HDRheight, cpuHDRenv);  // TODO: do we really need it?
+    // cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
 }
 
 
@@ -369,8 +370,7 @@ int main()
     
     // initialise OpenCL
     cl_mgr.initOpenCL();
-    // create HDR
-    initHDR(cl_mgr);
+;
     // create FBO
     setupBufferFBO();  // first GL
     // createVBO(&vbo);
@@ -390,6 +390,8 @@ int main()
     interactiveCamera->changeYaw(0.1);
     cl_mgr.cl_spheres = Buffer(cl_mgr.context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
     cl_mgr.cl_camera = Buffer(cl_mgr.context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(Camera), interactiveCamera);
+    // create HDR
+    initHDR(cl_mgr);
     // hostRendercam = (Camera*) queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
     
     // clEnqueueMapBuffer
