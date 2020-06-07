@@ -58,7 +58,7 @@ public:
 
 	void initOpenCL();
 
-	void initCLKernel(int buffer_switch, int buffer_reset, int window_width, int window_height, int sphere_count, int framenumber);
+	void initCLKernel(int buffer_switch, int buffer_reset, int window_width, int window_height, int sphere_count, int triangle_count, int framenumber);
 
 	bool setupBufferBVH(vector<BVHNodeGPU>& bvh_data, float bvh_size, float scene_size);
 

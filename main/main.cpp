@@ -42,6 +42,7 @@ using namespace std;
 using namespace cl;
 
 const int sphere_count = 4;
+const int triangle_count = 5;
 const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
 
 // OpenCL objects
@@ -60,6 +61,7 @@ unsigned int framenumber = 0;
 Camera* hostRendercam = NULL;
 InteractiveCamera* interactiveCamera;
 Sphere cpu_spheres[sphere_count];
+Triangle cpu_triangles[triangle_count];
 
 // image buffer (not needed with real-time viewport)
 cl_float4* cpu_output;
@@ -400,6 +402,7 @@ int main()
     interactiveCamera = new InteractiveCamera;
     interactiveCamera->changeYaw(0.1);
     cl_mgr.cl_spheres = Buffer(cl_mgr.context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
+    cl_mgr.cl_triangles = Buffer(cl_mgr.context, CL_MEM_READ_ONLY, triangle_count * sizeof(Triangle));
     cl_mgr.cl_camera = Buffer(cl_mgr.context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(Camera), interactiveCamera);
     // create HDR
      //initHDR(cl_mgr);
@@ -420,7 +423,7 @@ int main()
     
     // clEnqueueMapBuffer
 	// intitialise the kernel
-    cl_mgr.initCLKernel(buffer_switch, buffer_reset, window_width, window_height, sphere_count, framenumber);
+    cl_mgr.initCLKernel(buffer_switch, buffer_reset, window_width, window_height, sphere_count, triangle_count, framenumber);
     // err = cl_mgr.queue.enqueueWriteBuffer(cl_mgr.hdr_buffer, CL_TRUE, 0, sizeof(cl_float) * 5, HDRresult.colors);  // TODO: do we really need it?
 
     // ************************************** //
@@ -451,7 +454,7 @@ int main()
 
         // host to device: write
         cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
-
+        cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_triangles, CL_TRUE, 0, sphere_count * sizeof(Triangle), cpu_triangles);
         //if (buffer_reset) {
         //    float arg = 0;
         //    queue.enqueueFillBuffer(cl_accumbuffer, arg, 0, window_width * window_height * sizeof(cl_float3));
@@ -475,11 +478,12 @@ int main()
 
         cl_mgr.kernel.setArg(2, buffer_reset);
         cl_mgr.kernel.setArg(3, cl_mgr.cl_spheres);  // in case that spheres move
-        cl_mgr.kernel.setArg(7, framenumber);
-        cl_mgr.kernel.setArg(8, cl_mgr.cl_camera);
-        cl_mgr.kernel.setArg(9, rand());
-        cl_mgr.kernel.setArg(10, rand());
-        cl_mgr.kernel.setArg(11, cl_mgr.hdr_buffer);
+        cl_mgr.kernel.setArg(4, cl_mgr.cl_triangles);
+        cl_mgr.kernel.setArg(9, framenumber);
+        cl_mgr.kernel.setArg(10, cl_mgr.cl_camera);
+        cl_mgr.kernel.setArg(11, rand());
+        cl_mgr.kernel.setArg(12, rand());
+        cl_mgr.kernel.setArg(13, cl_mgr.hdr_buffer);
 
         runKernel();
 
