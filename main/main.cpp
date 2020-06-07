@@ -41,9 +41,9 @@
 using namespace std;
 using namespace cl;
 
-const int sphere_count = 4;
-const int triangle_count = 1;
 const std::string cl_kernel_filename = "../../../cl_kernels/simple_fbo.cl";
+const int sphere_count = 3;
+const int triangle_count = 1;
 const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
 
 // OpenCL objects
@@ -73,35 +73,43 @@ int e = HDRLoader::load(HDRmapname, HDRresult);
 int HDRwidth = HDRresult.width;
 int HDRheight = HDRresult.height;
 
-void initScene(Sphere* cpu_spheres) {
-    // floor
-    cpu_spheres[0].radius = 200.0f;
-    cpu_spheres[0].materialPara = 0;
-    cpu_spheres[0].position = { 0.0f, -200.4f, 0.0f };
-    cpu_spheres[0].color = { 0.25f, 0.25f, 0.25f };
-    cpu_spheres[0].emission = { 0.1f, 0.1f, 0.1f };
+void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
+    //// floor
+    //cpu_spheres[3].radius = 200.0f;
+    //cpu_spheres[3].materialPara = 0;
+    //cpu_spheres[3].position = { 0.0f, -200.5f, 0.0f };
+    //cpu_spheres[3].color = { 0.0f, 0.5f, 0.0f };
+    //cpu_spheres[3].emission = { 0.0f, 0.0f, 0.0f };
     
-    // left sphere
+    //// left sphere
     cpu_spheres[1].radius = 0.2f;
     cpu_spheres[1].materialPara = 0;
     cpu_spheres[1].position = { -0.25f, -0.24f, -0.1f };
-    cpu_spheres[1].color = { 0.9f, 0.6f, 0.6f };
+    cpu_spheres[1].color = { 0.5f, 0.0f, 0.0f };
     cpu_spheres[1].emission = { 0.0f, 0.0f, 0.0f };
    
     // right sphere
     cpu_spheres[2].radius = 0.2f;
     cpu_spheres[2].materialPara = 1;
     cpu_spheres[2].position = { 0.25f, -0.24f, 0.1f };
-    cpu_spheres[2].color = { 0.5f, 0.5f, 0.5f };
+    cpu_spheres[2].color = { 0.0f, 0.0f, 0.5f };
     cpu_spheres[2].emission = { 0.00f, 0.0f, 0.0f };
     
 
     // lightsource
-    cpu_spheres[3].radius = 0.6f;
-    cpu_spheres[3].materialPara = 0;
-    cpu_spheres[3].position = { 0.0f, 0.85f, 0.0f };
-    cpu_spheres[3].color = { 0.0f, 0.0f, 0.0f };
-    cpu_spheres[3].emission = { 8.0f, 8.0f, 8.0f };
+    cpu_spheres[0].radius = 0.6f;
+    cpu_spheres[0].materialPara = 0;
+    cpu_spheres[0].position = { 0.0f, 0.95f, -0.0f };
+    cpu_spheres[0].color = { 0.0f, 0.5f, 0.5f };
+    cpu_spheres[0].emission = { 0.0f, 0.0f, 0.0f };
+
+    cpu_triangles[0].vertex1 = { 100.1f, 0.0f, 0.0f };
+    cpu_triangles[0].vertex2 = { -100.1f, 0.0f, 0.0f };
+    cpu_triangles[0].vertex3 = { 0.0f, 0.0f, 100.1f };
+    cpu_triangles[0].materialPara = 1;
+    cpu_triangles[0].color = { 0.5f, 0.0f, 0.5f };
+    cpu_triangles[0].emission = { 10.00f, 10.0f, 10.0f };
+	
 }
 
 
@@ -312,7 +320,7 @@ void initCamera()
     interactiveCamera = new InteractiveCamera();
 
     interactiveCamera->setResolution(window_width, window_height);
-    interactiveCamera->setFOVX(45);
+    interactiveCamera->setFOVX(70);
 }
 
 
@@ -396,7 +404,7 @@ int main()
 	//glFinish();
 
 	// initialise scene
-	initScene(cpu_spheres);
+	initScene(cpu_spheres, cpu_triangles);
     interactiveCamera = new InteractiveCamera;
     interactiveCamera->changeYaw(0.1);
     cl_mgr.cl_spheres = Buffer(cl_mgr.context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
