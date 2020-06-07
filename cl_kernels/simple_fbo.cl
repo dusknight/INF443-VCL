@@ -27,7 +27,7 @@ typedef struct HITRECORD{
 	float3 color;
 	float3 emission;
 } HITRECORD;
-/* typePara: 0 means Sphere, 1 means triangle. materialPara: 0 means lambertian, 1 means metal*/
+/* typePara: 0 means Sphere, 1 means triangle. materialPara: 0 means lambertian, 1 means metal, 2means dielectrics.*/
 typedef struct Sphere {
 	float radius;
 	int materialPara;
@@ -501,6 +501,9 @@ bool intersect_scene(__constant Sphere* spheres, __constant Triangle* triangles,
 			}
 			if (hitrecord->materialPara == 1) {
 				reflect_sphere(spheres[*sphere_id], ray, *t, hitrecord, seed0, seed1);
+			}
+			if (hitrecord->materialPara == 2) {
+				retraction_sphere(spheres[*sphere_id], ray, *t, hitrecord, seed0, seed1);
 			}
 		}
 		if (type == 1) {
