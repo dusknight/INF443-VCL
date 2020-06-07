@@ -296,25 +296,25 @@ void retraction_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECOR
 
 	float3 normal = normalize(hitpoint - sphere.pos);
 	if (dot(normal, ray->dir) > 0.0f) {
-		neta = 1.0 / neta;
+		neta = 1.0f / neta;
 		normal = normal * (-1.0f);
 	}
 	float3 normal_facing = normal;
+	
 	hitrecord->normal = normal_facing;
-
 
 	float costheta = dot(-normalize(ray->dir), normal_facing);
 	float sintheta = sqrt(1 - costheta * costheta);
 	float3 n = normal_facing;
-	float3 w = nomalize(ray->dir + dot(ray->dir, n) * n);
+	float3 w = normalize(ray->dir + dot(ray->dir, n) * n);
 	float3 newdir;
 	if (sintheta / neta > 1.0f) {
 		newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
 	}
-	else {
+	if (sintheta / neta <= 1.0f) {
 		float temp_rand = dai_float_01(*seed0);
 		*seed0 += 331;
-		if (temp_rand > 0.85) {
+		if (temp_rand > 0.85f) {
 			newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
 		}
 		else {
