@@ -345,6 +345,7 @@ float3 trace(__constant Sphere* spheres, Ray* camray, const int sphere_count,  i
 		if (!intersect_scene(spheres, &ray, &t, &hitsphere_id, sphere_count, &hitrecord, seed0, seed1))
 			//return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 		{
+			// return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
 			longlatX = longlatX < 0.f ? longlatX + 2 * PI : longlatX;  // wrap around full circle if negative
 			float longlatY = acos(ray.dir.y); // add RotateMap at some point, see Fragmentarium
@@ -361,11 +362,7 @@ float3 trace(__constant Sphere* spheres, Ray* camray, const int sphere_count,  i
 			int HDRtexelidx = u2 + v2 * HDRwidth;
 
 			float4 HDRcol = HDRimg[HDRtexelidx];
-			// float3 HDRcol2 = { HDRcol.x, HDRcol.y, HDRcol.z };
-			// return (u, v, offsetY);
-			return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
-			// return HDRcol.xyz;
-			// return accum_color += (mask * HDRcol.xyz);
+			return accum_color += (mask * HDRcol.xyz);
 		}
 
 		/* else, we've got a hit! Fetch the closest hit sphere */
@@ -463,7 +460,7 @@ render_kernel(
 
 
 	if (reset == 1){
-		write_imagef(outputImage, pixel, HDRimg[0] * 100);
+		write_imagef(outputImage, pixel, colorf4);
 	}
 	else{
 		float4 prev_color = read_imagef(inputImage, sampler, pixel);
@@ -472,7 +469,7 @@ render_kernel(
 		colorf4 += (prev_color * num_passes);
 		colorf4 /= (num_passes + 1);
 		colorf4.w = num_passes + 1;
-		write_imagef(outputImage, pixel, HDRimg[0]*100);
+		write_imagef(outputImage, pixel, colorf4);
 	}
 }
 
