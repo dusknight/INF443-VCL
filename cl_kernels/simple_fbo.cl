@@ -305,21 +305,32 @@ float intersect_triangle(const Triangle* triangle, Ray* ray)
 	float3 POINTintersect = ray->origin + TIMEintersect * ray->dir;
 
 	/* Check step 1*/
-	float3 e12 = normalize(triangle->vertex2 - triangle->vertex1);
-	float3 e13 = normalize(triangle->vertex3 - triangle->vertex1);
-	float cos_angle1 = dot(e12, e13);
-	float3 vec_inersetcAnd1 = normalize(POINTintersect - triangle->vertex1);
-	if (dot(vec_inersetcAnd1, e12) < cos_angle1 + EPSILON || dot(vec_inersetcAnd1, e13) < cos_angle1 + EPSILON) return 0.0f;
+	//float3 e12 = normalize(triangle->vertex2 - triangle->vertex1);
+	//float3 e13 = normalize(triangle->vertex3 - triangle->vertex1);
+	//float cos_angle1 = dot(e12, e13);
+	//float3 vec_inersetcAnd1 = normalize(POINTintersect - triangle->vertex1);
+	//if (dot(vec_inersetcAnd1, e12) < cos_angle1 + EPSILON || dot(vec_inersetcAnd1, e13) < cos_angle1 + EPSILON) return 0.0f;
 
-	/* Check step 2*/
-	float3 e32 = normalize(triangle->vertex2 - triangle->vertex3);
-	float3 e31 = normalize(triangle->vertex1 - triangle->vertex3);
-	float cos_angle3 = dot(e32, e31);
-	float3 vec_inersetcAnd3 = normalize(POINTintersect - triangle->vertex1);
-	if (dot(vec_inersetcAnd3, e31) < cos_angle3+EPSILON || dot(vec_inersetcAnd1, e32) < cos_angle3 + EPSILON) return 0.0f;
+	///* Check step 2*/
+	//float3 e32 = normalize(triangle->vertex2 - triangle->vertex3);
+	//float3 e31 = normalize(triangle->vertex1 - triangle->vertex3);
+	//float cos_angle3 = dot(e32, e31);
+	//float3 vec_inersetcAnd3 = normalize(POINTintersect - triangle->vertex1);
+	//if (dot(vec_inersetcAnd3, e31) < cos_angle3+EPSILON || dot(vec_inersetcAnd1, e32) < cos_angle3 + EPSILON) return 0.0f;
 
-	return TIMEintersect;
+	float3 a = normalize(triangle->vertex1 - POINTintersect);
+	float3 b = normalize(triangle->vertex2 - POINTintersect);
+	float3 c = normalize(triangle->vertex3 - POINTintersect);
 
+	float3 sa = normalize(cross(a, b));
+	float3 sb = normalize(cross(b, c));
+	float3 sc = normalize(cross(c, a));
+
+	if (dot(sa, sb) > 0.9999 && dot(sb, sc) > 0.9999 && dot(sc, sa) > 0.9999) {
+		return TIMEintersect;
+	}
+
+	return 0.0f;
 }
 
 void diffuse_triangle(Triangle triangle, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {

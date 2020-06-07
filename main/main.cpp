@@ -105,9 +105,9 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
     cpu_spheres[0].color = { 0.0f, 0.5f, 0.5f };
     cpu_spheres[0].emission = { 0.0f, 0.0f, 0.0f };
 
-    cpu_triangles[0].vertex1 = { 1.1f, 0.0f, 0.0f };
-    cpu_triangles[0].vertex2 = { -1.1f, 0.0f, 0.0f };
-    cpu_triangles[0].vertex3 = { 0.0f, 0.0f, 1.1f };
+    cpu_triangles[0].vertex1 = { 100.1f, 0.0f, 0.0f };
+    cpu_triangles[0].vertex2 = { -100.1f, 0.0f, 0.0f };
+    cpu_triangles[0].vertex3 = { 0.0f, 0.0f, 100.1f };
     cpu_triangles[0].materialPara = 1;
     cpu_triangles[0].color = { 0.5f, 0.0f, 0.5f };
     cpu_triangles[0].emission = { 10.00f, 10.0f, 10.0f };
