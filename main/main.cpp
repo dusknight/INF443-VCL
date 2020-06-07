@@ -76,36 +76,36 @@ int HDRheight = HDRresult.height;
 void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
     //// floor
     cpu_spheres[3].radius = 200.0f;
-    cpu_spheres[3].materialPara = 2;
-    cpu_spheres[3].position = { 0.0f, -200.8f, 0.0f };
-    cpu_spheres[3].color = { 0.9f, 0.9f, 0.9f };
+    cpu_spheres[3].materialPara = 1;
+    cpu_spheres[3].position = { 0.0f, -204.3f, 0.0f };
+    cpu_spheres[3].color = { 0.2f, 0.3f, 0.7f };
     cpu_spheres[3].emission = { 0.0f, 0.0f, 0.0f };
     
     //// left sphere
     cpu_spheres[1].radius = 0.15f;
     cpu_spheres[1].materialPara = 0;
-    cpu_spheres[1].position = { -0.35f, -0.34f, -0.15f };
+    cpu_spheres[1].position = { -0.35f, -2.49f, -0.15f };
     cpu_spheres[1].color = { 0.5f, 0.0f, 0.0f };
     cpu_spheres[1].emission = { 0.0f, 0.0f, 0.0f };
    
     // right sphere
     cpu_spheres[2].radius = 0.15f;
     cpu_spheres[2].materialPara = 1;
-    cpu_spheres[2].position = { 0.35f, -0.34f, 0.15f };
+    cpu_spheres[2].position = { 0.35f, -2.49f, 0.15f };
     cpu_spheres[2].color = { 0.7f, 0.7f, 0.7f };
     cpu_spheres[2].emission = { 0.00f, 0.0f, 0.0f };
 
     //midle sphere
     cpu_spheres[4].radius = 0.1f;
     cpu_spheres[4].materialPara = 2;
-    cpu_spheres[4].position = { 0.0f, 0.1f, 0.0f };
+    cpu_spheres[4].position = { 0.0f, -2.05f, 0.0f };
     cpu_spheres[4].color = { 0.2f, 0.7f, 0.2f };
     cpu_spheres[4].emission = { 0.1f, 0.1f, 0.1f };
     
     // lightsource
-    cpu_spheres[0].radius = 0.6f;
+    cpu_spheres[0].radius = 0.45f;
     cpu_spheres[0].materialPara = 1;
-    cpu_spheres[0].position = { 0.0f, 0.95f, -0.0f };
+    cpu_spheres[0].position = { 0.0f, 0.70f, -0.0f };
     cpu_spheres[0].color = { 0.85f, 0.7f, 0.1f };
     cpu_spheres[0].emission = { 0.05f, 0.05f, 0.03f };
 
