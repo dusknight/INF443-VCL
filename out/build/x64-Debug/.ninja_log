@@ -79,3 +79,8 @@
 1524	2884	613273619	CMakeFiles/pgm.dir/vcl/shape/hierarchy_mesh/hierarchy_mesh_drawable/hierarchy_mesh_drawable.cpp.obj	6997705262dad5e3
 1937	3039	613273619	CMakeFiles/pgm.dir/vcl/shape/mesh/mesh_drawable/mesh_drawable_gpu_data/mesh_drawable_gpu_data.cpp.obj	26e830088001ed2d
 3098	3431	613273619	pgm.exe	297131ccc998e46a
+9	668	613273790	CMakeFiles/pgm.dir/cl_ext/camera.cpp.obj	8007fe4cc0bd6b71
+14	1107	613273790	CMakeFiles/pgm.dir/main/main.cpp.obj	53832742c228cde
+1110	1417	613273791	pgm.exe	297131ccc998e46a
+12	1329	613274517	CMakeFiles/pgm.dir/main/main.cpp.obj	53832742c228cde
+1332	1533	613274517	pgm.exe	297131ccc998e46a
