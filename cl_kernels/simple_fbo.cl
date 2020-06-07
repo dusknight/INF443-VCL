@@ -40,9 +40,10 @@ typedef struct Triangle {
 	float3 vertex1;
 	float3 vertex2;
 	float3 vertex3;
-	int materialPara;
 	float3 color;
 	float3 emission;
+	int materialPara;
+
 }Triangle;
 
 typedef struct Object {
@@ -672,6 +673,7 @@ render_kernel(
 
 	if (reset == 1){
 		// colorf4  = HDRimg[y_coord* HDRwidth+x_coord];
+		//colorf4.xyz = triangles[0].vertex1 / 100;
 		write_imagef(outputImage, pixel, colorf4);
 	}
 	else{
@@ -682,6 +684,7 @@ render_kernel(
 		colorf4 /= (num_passes + 1);
 		colorf4.w = num_passes + 1;
 		// colorf4 = HDRimg[y_coord * HDRwidth + x_coord];
+		//colorf4.xyz = triangles[0].vertex1 / 100;
 		write_imagef(outputImage, pixel, colorf4);
 	}
 }

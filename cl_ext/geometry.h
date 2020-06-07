@@ -21,9 +21,9 @@ struct Triangle {
 	cl_float3 vertex1;
 	cl_float3 vertex2;
 	cl_float3 vertex3;
-	int materialPara;
 	cl_float3 color;
 	cl_float3 emission;
+	int materialPara;
 	float dummy1;
 	float dummy2;
 	int dummy0;
