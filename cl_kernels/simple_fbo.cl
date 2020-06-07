@@ -306,7 +306,7 @@ void retraction_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECOR
 	float costheta = dot(-normalize(ray->dir), normal_facing);
 	float sintheta = sqrt(1 - costheta * costheta);
 	float3 n = normal_facing;
-	float3 w = nomalize(ray->dir + dot(ray->dir, n) * n);
+	float3 w = normalize(ray->dir + dot(ray->dir, n) * n);
 	float3 newdir;
 	if (sintheta / neta > 1.0f) {
 		newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
