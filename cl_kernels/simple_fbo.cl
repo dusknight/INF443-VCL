@@ -83,7 +83,9 @@ float3 getNormalTriangle(Triangle triangle) {
 	}
 	else {
 		return -1.0f * normalize(cross(triangle.vertex2 - triangle.vertex1, triangle.vertex3 - triangle.vertex1));
+	}
 }
+
 float3 TriangleInitialize(Triangle* triangle) {
 	changeOrientation(triangle);
 	return normalize(cross(triangle->vertex2 - triangle->vertex1, triangle->vertex3 - triangle->vertex1));
@@ -340,7 +342,7 @@ void diffuse_triangle(Triangle triangle, Ray* ray, float TIMEintersection, HITRE
 	ray->dir = newdir;
 }
 
-void reflect_triangle(Sphere triangle, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
+void reflect_triangle(Triangle triangle, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
 	*seed0 += 333;
 	*seed1 += 64;
 
