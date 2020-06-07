@@ -299,6 +299,7 @@ void retraction_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECOR
 		neta = 1.0 / neta;
 		normal = normal * (-1.0f);
 	}
+	float3 normal_facing = normal;
 	hitrecord->normal = normal_facing;
 
 
