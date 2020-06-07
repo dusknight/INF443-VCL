@@ -330,7 +330,7 @@ void cl_manager::initOpenCL()
     }
 }
 
-void cl_manager::initCLKernel(int buffer_switch, int buffer_reset, int window_width, int window_height, int sphere_count, int framenumber) {
+void cl_manager::initCLKernel(int buffer_switch, int buffer_reset, int window_width, int window_height, int sphere_count, int triangle_count, int framenumber) {
 
     // pick a rendermode
     unsigned int rendermode = 1;
@@ -350,14 +350,16 @@ void cl_manager::initCLKernel(int buffer_switch, int buffer_reset, int window_wi
     // kernel.setArg(2, buffer_switch);
     kernel.setArg(2, buffer_reset);
     kernel.setArg(3, cl_spheres);
-    kernel.setArg(4, window_width);
-    kernel.setArg(5, window_height);
-    kernel.setArg(6, sphere_count);
-    kernel.setArg(7, framenumber);
-    // kernel.setArg(8, cl_camera);
-    kernel.setArg(9, rand());
-    kernel.setArg(10, rand());
-    kernel.setArg(11, hdr_buffer);
+    kernel.setArg(4, cl_triangles);
+    kernel.setArg(5, window_width);
+    kernel.setArg(6, window_height);
+    kernel.setArg(7, sphere_count);
+    kernel.setArg(8, triangle_count);
+    kernel.setArg(9, framenumber);
+    // kernel.setArg(10, cl_camera);
+    kernel.setArg(11, rand());
+    kernel.setArg(12, rand());
+    kernel.setArg(13, hdr_buffer);
 }
 
 bool cl_manager::setupBufferBVH(vector<BVHNodeGPU>& bvh_data, float bvh_size, float scene_size) {

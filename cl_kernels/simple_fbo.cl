@@ -83,7 +83,9 @@ float3 getNormalTriangle(Triangle triangle) {
 	}
 	else {
 		return -1.0f * normalize(cross(triangle.vertex2 - triangle.vertex1, triangle.vertex3 - triangle.vertex1));
+	}
 }
+
 float3 TriangleInitialize(Triangle* triangle) {
 	changeOrientation(triangle);
 	return normalize(cross(triangle->vertex2 - triangle->vertex1, triangle->vertex3 - triangle->vertex1));
@@ -185,26 +187,26 @@ Ray createCamRay(const float x_coord, const float y_coord, const int width, cons
 	return ray;
 }
 
-struct Ray createCamRay_simple(const int x_coord, const int y_coord, const int width, const int height){
-
-	float fx = (float)x_coord / (float)width;  /* convert int in range [0 - width] to float in range [0-1] */
-	float fy = (float)y_coord / (float)height; /* convert int in range [0 - height] to float in range [0-1] */
-
-	/* calculate aspect ratio */
-	float aspect_ratio = (float)(width) / (float)(height);
-	float fx2 = (fx - 0.5f) * aspect_ratio;
-	float fy2 = fy - 0.5f;
-
-	/* determine position of pixel on screen */
-	float3 pixel_pos = (float3)(fx2, -fy2, 0.0f);
-
-	/* create camera ray*/
-	struct Ray ray;
-	ray.origin = (float3)(0.0f, 0.0f, 40.0f); /* fixed camera position */
-	ray.dir = normalize(pixel_pos - ray.origin); /* ray direction is vector from camera to pixel */
-
-	return ray;
-}
+//struct Ray createCamRay_simple(const int x_coord, const int y_coord, const int width, const int height){
+//
+//	float fx = (float)x_coord / (float)width;  /* convert int in range [0 - width] to float in range [0-1] */
+//	float fy = (float)y_coord / (float)height; /* convert int in range [0 - height] to float in range [0-1] */
+//
+//	/* calculate aspect ratio */
+//	float aspect_ratio = (float)(width) / (float)(height);
+//	float fx2 = (fx - 0.5f) * aspect_ratio;
+//	float fy2 = fy - 0.5f;
+//
+//	/* determine position of pixel on screen */
+//	float3 pixel_pos = (float3)(fx2, -fy2, 0.0f);
+//
+//	/* create camera ray*/
+//	struct Ray ray;
+//	ray.origin = (float3)(0.0f, 0.0f, 40.0f); /* fixed camera position */
+//	ray.dir = normalize(pixel_pos - ray.origin); /* ray direction is vector from camera to pixel */
+//
+//	return ray;
+//}
 
 /* (__global Sphere* sphere, const Ray* ray) */
 float intersect_sphere(const Sphere* sphere, Ray* ray) /* version using local copy of sphere */
@@ -340,7 +342,7 @@ void diffuse_triangle(Triangle triangle, Ray* ray, float TIMEintersection, HITRE
 	ray->dir = newdir;
 }
 
-void reflect_triangle(Sphere triangle, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
+void reflect_triangle(Triangle triangle, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
 	*seed0 += 333;
 	*seed1 += 64;
 
@@ -351,7 +353,7 @@ void reflect_triangle(Sphere triangle, Ray* ray, float TIMEintersection, HITRECO
 	hitrecord->hittime = TIMEintersection;
 	hitrecord->p = hitpoint;
 
-	float3 normal = normalize(hitpoint - sphere.pos);
+	float3 normal = getNormalTriangle(triangle);;
 	float3 normal_facing = dot(normal, ray->dir) < 0.0f ? normal : normal * (-1.0f);
 	hitrecord->normal = normal_facing;
 
@@ -363,7 +365,9 @@ void reflect_triangle(Sphere triangle, Ray* ray, float TIMEintersection, HITRECO
 
 
 
-bool intersect_scene(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ray, float* t, int* sphere_id, int* triangle_id, const int sphere_count, const int triangle_count, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1)
+bool intersect_scene(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ray, float* t, int* sphere_id, int* triangle_id, 
+	const int sphere_count, const int triangle_count, 
+	HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1)
 {
 	/* initialise t to a very large number,
 	so t will be guaranteed to be smaller
@@ -399,7 +403,7 @@ bool intersect_scene(__constant Sphere* spheres, __constant Triangle* triangles,
 		Triangle triangle = triangles[i]; /* create local copy of sphere */
 
 		/* float hitdistance = intersect_sphere(&spheres[i], ray); */
-		float hitdistance = intersect_triangle(&sphere, ray);
+		float hitdistance = intersect_triangle(&triangle, ray);
 		/* keep track of the closest intersection and hitobject found so far */
 		if (hitdistance != 0.0f && hitdistance < temp_triangle) {
 			temp_triangle = hitdistance;
@@ -541,8 +545,8 @@ __kernel void
 /*render_kernel(__global float3* output, int width, int height, int rendermode)*/
 render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
-	__constant Sphere* spheres, const int width, const int height,
-	const int sphere_count, const int framenumber, __constant const Camera* cam,
+	__constant Sphere* spheres, __constant Triangle* triangles, const int width, const int height,
+	const int sphere_count, const int triangle_count, const int framenumber, __constant const Camera* cam,
 	float random0, float random1, __constant float4* HDRimg)
 {
 	const uint hashedframenumber = wang_hash(framenumber);
@@ -577,7 +581,7 @@ render_kernel(
 		seedsupersampling = wang_hash(seedsupersampling);
 		struct Ray camray = createCamRay(x_coord + offsetdaix, y_coord + offsetdaiy, width, height, cam, &seed0, &seed1);
 		for (int i = 0; i < SAMPLES; i++) {
-			finalcolor += trace(spheres, &camray, sphere_count, &seed0, &seed1, HDRimg) * invSamples;
+			finalcolor += trace(spheres, triangles, &camray, sphere_count, triangle_count, &seed0, &seed1, HDRimg) * invSamples;
 		}
 	}
 	finalcolor = finalcolor / supersamplenumber;
