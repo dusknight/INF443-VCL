@@ -41,6 +41,7 @@
 using namespace std;
 using namespace cl;
 
+const float camera_move_step = 0.5f;
 const std::string cl_kernel_filename = "../../../cl_kernels/simple_fbo.cl";
 const int sphere_count = 5;
 const int triangle_count = 1;
@@ -576,16 +577,41 @@ void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int acti
         interactiveCamera->changeYaw(0.1); 
         scene_changed = 1;
     }
-    //    cameraUpdateCallback(glm::vec4(1, 0, 0, 0), 0, 0);
+    if (key == GLFW_KEY_HOME && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->changeRadius(0.2);
+        scene_changed = 1;
+    }
 
-    //if (key == GLFW_KEY_HOME && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    //    GlfwManager::cameraUpdateCallback(glm::vec4(0, 1, 0, 0), 0, 0);
-
-    //if (key == GLFW_KEY_END && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    //    cameraUpdateCallback(glm::vec4(0, -1, 0, 0), 0, 0);
+    if (key == GLFW_KEY_END && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->changeRadius(-0.2);
+        scene_changed = 1;
+    }
 
     //if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     //    ptr->space_flag = true;
     //if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE)
     //    ptr->space_flag = false;
+
+    if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->goForward(camera_move_step);
+        scene_changed = 1;
+    }
+    if (key == GLFW_KEY_S && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->goForward(-camera_move_step);
+        scene_changed = 1;
+    }
+    if (key == GLFW_KEY_D && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->rotateRight(10*camera_move_step);
+        scene_changed = 1;
+    }
+    if(key == GLFW_KEY_S && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        interactiveCamera->rotateRight(-10*camera_move_step);
+        scene_changed = 1;
+    }
 }
