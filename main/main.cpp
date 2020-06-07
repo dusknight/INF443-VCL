@@ -43,7 +43,7 @@ using namespace cl;
 
 const float camera_move_step = 0.5f;
 const std::string cl_kernel_filename = "../../../cl_kernels/simple_fbo.cl";
-const int sphere_count = 5;
+const int sphere_count = 6;
 const int triangle_count = 1;
 const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
 
@@ -78,41 +78,48 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
     //// floor
     cpu_spheres[3].radius = 200.0f;
     cpu_spheres[3].materialPara = 1;
-    cpu_spheres[3].position = { 0.0f, -204.3f, 0.0f };
+    cpu_spheres[3].position = { 0.0f, -203.3f, 0.0f };
     cpu_spheres[3].color = { 0.2f, 0.3f, 0.7f };
     cpu_spheres[3].emission = { 0.0f, 0.0f, 0.0f };
     
     //// left sphere
     cpu_spheres[1].radius = 0.15f;
     cpu_spheres[1].materialPara = 0;
-    cpu_spheres[1].position = { -0.35f, -2.49f, -0.15f };
+    cpu_spheres[1].position = { -0.35f, -1.29f, -0.15f };
     cpu_spheres[1].color = { 0.5f, 0.0f, 0.0f };
     cpu_spheres[1].emission = { 0.0f, 0.0f, 0.0f };
    
     // right sphere
     cpu_spheres[2].radius = 0.15f;
     cpu_spheres[2].materialPara = 1;
-    cpu_spheres[2].position = { 0.35f, -2.49f, 0.15f };
+    cpu_spheres[2].position = { 0.35f, -1.29f, 0.15f };
     cpu_spheres[2].color = { 0.7f, 0.7f, 0.7f };
     cpu_spheres[2].emission = { 0.00f, 0.0f, 0.0f };
 
     //midle sphere
     cpu_spheres[4].radius = 0.1f;
     cpu_spheres[4].materialPara = 2;
-    cpu_spheres[4].position = { 0.0f, -2.05f, 0.0f };
+    cpu_spheres[4].position = { 0.0f, -0.85f, 0.0f };
     cpu_spheres[4].color = { 0.2f, 0.7f, 0.2f };
     cpu_spheres[4].emission = { 0.1f, 0.1f, 0.1f };
     
     // lightsource
     cpu_spheres[0].radius = 0.45f;
-    cpu_spheres[0].materialPara = 1;
-    cpu_spheres[0].position = { 0.0f, 0.70f, -0.0f };
+    cpu_spheres[0].materialPara = 2;
+    cpu_spheres[0].position = { 0.0f, 0.00f, -0.0f };
     cpu_spheres[0].color = { 0.85f, 0.7f, 0.1f };
     cpu_spheres[0].emission = { 0.05f, 0.05f, 0.03f };
 
-    cpu_triangles[0].vertex1 = { 1.1f, 0.0f, 0.0f };
-    cpu_triangles[0].vertex2 = { -1.1f, 0.0f, 0.0f };
-    cpu_triangles[0].vertex3 = { 0.0f, 0.0f, 1.1f };
+    // Real lightsource
+    cpu_spheres[5].radius = 0.15f;
+    cpu_spheres[5].materialPara = 1;
+    cpu_spheres[5].position = { 0.0f, 0.62f, -0.0f };
+    cpu_spheres[5].color = { 0.85f, 0.7f, 0.1f };
+    cpu_spheres[5].emission = { 5.05f, 1.05f, 1.03f };
+
+    cpu_triangles[0].vertex1 = { 1.1f, -0.5f, 0.0f };
+    cpu_triangles[0].vertex2 = { -1.1f, -0.5f, 0.0f };
+    cpu_triangles[0].vertex3 = { 0.0f, -0.5f, 1.1f };
     cpu_triangles[0].materialPara = 1;
     cpu_triangles[0].color = { 0.5f, 0.0f, 0.5f };
     cpu_triangles[0].emission = { 0.10f, 0.10f, 0.10f };

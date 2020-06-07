@@ -654,7 +654,7 @@ render_kernel(
 	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
 	float invSamples = 1.0f / SAMPLES;
 
-	int supersamplenumber = 16;
+	int supersamplenumber = 8;
 	uint seedsupersampling = 2021;
 	for (int j = 0; j < supersamplenumber; j++) {
 		float offsetdaix = dai_float_01(seedsupersampling) / (img_width + 0.113);
