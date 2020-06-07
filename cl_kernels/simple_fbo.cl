@@ -493,7 +493,7 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 		if (!intersect_scene(spheres, triangles, &ray, &t, &hitsphere_id, &triangle_id, sphere_count, triangle_count, &hitrecord, seed0, seed1))
 			//return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 		{
-			return accum_color += mask * (float3)(0.0f, 0.0f, 0.0f);
+			return accum_color += mask * (float3)(0.15f, 0.15f, 0.15f);
 			
 			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
 			longlatX = longlatX < 0.f ? longlatX + 2 * PI : longlatX;  // wrap around full circle if negative
