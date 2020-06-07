@@ -553,24 +553,17 @@ void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int acti
         interactiveCamera->changePitch(0.1);
     }
 
-        // cpu_spheres[1].position + vcl::vec3(10, 0, 0);
-    //    GlfwManager::cameraUpdateCallback(glm::vec4(0, 0, 1, 0), 0, 0);
-
     if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
         interactiveCamera->changePitch(-0.1);
         scene_changed = 1;
     }
-        // interactiveCamera->changeAltitude(-0.5);
-    //    cameraUpdateCallback(glm::vec4(0, 0, -1, 0), 0, 0);
 
     if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
         interactiveCamera->changeYaw(-0.1); 
         scene_changed = 1;
     }
-
-    //    cameraUpdateCallback(glm::vec4(-1, 0, 0, 0), 0, 0);
 
     if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
