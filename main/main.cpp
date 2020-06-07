@@ -459,8 +459,8 @@ int main()
         // framenumber++;
 
         // host to device: write
-        cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
-        cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_triangles, CL_TRUE, 0, sphere_count * sizeof(Triangle), cpu_triangles);
+        err = cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
+        err = cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_triangles, CL_TRUE, 0, triangle_count * sizeof(Triangle), cpu_triangles);
         //if (buffer_reset) {
         //    float arg = 0;
         //    queue.enqueueFillBuffer(cl_accumbuffer, arg, 0, window_width * window_height * sizeof(cl_float3));

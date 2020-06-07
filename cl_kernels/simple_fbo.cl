@@ -40,9 +40,10 @@ typedef struct Triangle {
 	float3 vertex1;
 	float3 vertex2;
 	float3 vertex3;
-	int materialPara;
 	float3 color;
 	float3 emission;
+	int materialPara;
+
 }Triangle;
 
 typedef struct Object {
@@ -505,8 +506,10 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 		{
 			// return accum_color += mask * (float3)(0.15f, 0.15f, 0.15f);
 			
-			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
+			float longlatX = atan2(ray.dir.x, ray.dir.z) / 8; // Y is up, swap x for y and z for x
+			// float longlatX = atan2(ray.dir.z, ray.dir.x); // Y is up, swap x for y and z for x
 			longlatX = longlatX < 0.f ? longlatX + 2 * PI : longlatX;  // wrap around full circle if negative
+			//float longlatY = acos(ray.dir.y); // add RotateMap at some point, see Fragmentarium
 			float longlatY = acos(ray.dir.y); // add RotateMap at some point, see Fragmentarium
 			// map theta and phi to u and v texturecoordinates in [0,1] x [0,1] range
 			float offsetY = 0.5f;
@@ -521,7 +524,7 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 			int HDRtexelidx = u2 + v2 * HDRwidth;
 
 			float4 HDRcol = HDRimg[HDRtexelidx];
-			return accum_color += (mask * HDRcol.xyz);
+			return accum_color += (mask * HDRcol.xyz*2);
 			//float3 addColor= (float3)((float)u2/ HDRwidth, (float)v2 / HDRheight, 0.55f);
 			//return accum_color += (mask + addColor);
 		}
@@ -625,6 +628,7 @@ render_kernel(
 
 	if (reset == 1){
 		// colorf4  = HDRimg[y_coord* HDRwidth+x_coord];
+		//colorf4.xyz = triangles[0].vertex1 / 100;
 		write_imagef(outputImage, pixel, colorf4);
 	}
 	else{
@@ -635,6 +639,7 @@ render_kernel(
 		colorf4 /= (num_passes + 1);
 		colorf4.w = num_passes + 1;
 		// colorf4 = HDRimg[y_coord * HDRwidth + x_coord];
+		//colorf4.xyz = triangles[0].vertex1 / 100;
 		write_imagef(outputImage, pixel, colorf4);
 	}
 }

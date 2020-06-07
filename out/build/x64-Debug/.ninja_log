@@ -79,3 +79,7 @@
 8593	10081	613265494	CMakeFiles/pgm.dir/vcl/shape/segment/segments_drawable/segments_drawable.cpp.obj	69ec3110cbe9b7cf
 8628	10093	613265494	CMakeFiles/pgm.dir/vcl/wrapper/glfw/window/window.cpp.obj	2d25be7120b6d147
 10095	10637	613265495	pgm.exe	297131ccc998e46a
+9	1445	613268874	CMakeFiles/pgm.dir/main/main.cpp.obj	53832742c228cde
+1448	1663	613268874	pgm.exe	297131ccc998e46a
+7	1134	613268970	CMakeFiles/pgm.dir/main/main.cpp.obj	53832742c228cde
+1138	1323	613268970	pgm.exe	297131ccc998e46a
