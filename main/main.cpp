@@ -42,15 +42,13 @@ using namespace std;
 using namespace cl;
 
 const int sphere_count = 4;
-const int triangle_count = 5;
+const int triangle_count = 1;
+const std::string cl_kernel_filename = "../../../cl_kernels/simple_fbo.cl";
 const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
 
 // OpenCL objects
-cl_manager cl_mgr;
-// BufferGL cl_vbo;
-// vector<Memory> cl_vbos;
+cl_manager cl_mgr(cl_kernel_filename);
 
-// image_buffers.resize(4);
 GLuint rbo_IDs[2];
 GLuint fbo_ID;
 // image buffer (not needed with real-time viewport)
@@ -445,7 +443,7 @@ int main()
         // glBindTexture(GL_TEXTURE_2D,scene.texture_white);
 
         // Create the basic gui structure with ImGui
-        gui_start_basic_structure(gui,scene);
+        gui_start_basic_structure(gui, cl_mgr);
 
         // Perform computation and draw calls for each iteration loop
         // scene_current.frame_draw(shaders, scene, gui); opengl_debug();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vcl/vcl.hpp"
+#include "cl_ext/cl_manager.h"
 #include <map>
 
 struct scene_structure
@@ -29,3 +30,4 @@ void setup_scene(scene_structure &scene, gui_structure& gui, const std::map<std:
 void clear_screen();
 void update_fps_title(GLFWwindow* window, const std::string& title, vcl::glfw_fps_counter& fps_counter);
 void gui_start_basic_structure(gui_structure& gui, scene_structure& scene);
+void gui_start_basic_structure(gui_structure& gui, cl_manager &cl_mgr);

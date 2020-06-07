@@ -477,7 +477,6 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 
 		/* if ray misses scene, return background colour */
 		if (!intersect_scene(spheres, triangles, &ray, &t, &hitsphere_id, &triangle_id, sphere_count, triangle_count, &hitrecord, seed0, seed1))
-			//return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 		{
 			// return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
@@ -496,7 +495,7 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 			int HDRtexelidx = u2 + v2 * HDRwidth;
 
 			float4 HDRcol = HDRimg[HDRtexelidx];
-			return accum_color += (mask * HDRcol.xyz);
+			return accum_color += (mask * HDRcol.xyz * 2.0f);
 		}
 
 		/* else, we've got a hit! Fetch the closest hit sphere */
@@ -594,6 +593,7 @@ render_kernel(
 
 
 	if (reset == 1){
+		// colorf4  = HDRimg[y_coord* HDRwidth+x_coord];
 		write_imagef(outputImage, pixel, colorf4);
 	}
 	else{
@@ -603,6 +603,7 @@ render_kernel(
 		colorf4 += (prev_color * num_passes);
 		colorf4 /= (num_passes + 1);
 		colorf4.w = num_passes + 1;
+		// colorf4 = HDRimg[y_coord * HDRwidth + x_coord];
 		write_imagef(outputImage, pixel, colorf4);
 	}
 }

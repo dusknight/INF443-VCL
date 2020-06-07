@@ -20,12 +20,17 @@ void printErrorLog(const cl::Program& program, const cl::Device& device) {
 
 
 
-cl_manager::cl_manager()
+cl_manager::cl_manager(std::string filename) : kernel_filename(filename)
 {
 }
 
 cl_manager::~cl_manager()
 {
+}
+
+std::string cl_manager::get_filename()
+{
+    return kernel_filename;
 }
 
 void cl_manager::setup_dev(cl_context_properties* properties, cl_device_id device_id, cl_platform_id platform_id) {
@@ -294,7 +299,7 @@ void cl_manager::initOpenCL()
 
     // Convert the OpenCL source code to a string// Convert the OpenCL source code to a string
     string source;
-    ifstream file("../../../cl_kernels/simple_fbo.cl");
+    ifstream file(kernel_filename);
     streamoff len;
     if (!file) {
         cout << "\nNo OpenCL file found!" << endl << "Exiting..." << endl;

@@ -22,15 +22,15 @@
 
 #include "cl_ext/cl_defs.h"
 #include "cl_ext/data/HDRloader.h"
-
+#include <string>
 // using namespace cl;
 using namespace std;
 
 class cl_manager {
 public:
-	cl_manager();
+	cl_manager(std::string filename);
 	~cl_manager();
-
+	
 	cl::Platform platform;
 	cl::Device device;
 	cl::CommandQueue queue;
@@ -48,6 +48,7 @@ public:
 	cl::Buffer mat_buffer;
 	cl::Buffer hdr_buffer;
 
+	std::string get_filename();
 	void setup_dev(cl_context_properties* properties, cl_device_id device_id, cl_platform_id platform_id);
 
 	void pickDevice(const std::vector<cl::Device>& devices);
@@ -68,4 +69,6 @@ public:
 
 	bool setupBUfferHDR(cl_float4* cpu_HDR, int height, int width);
 	bool setupBUfferHDR(cl_float* cpu_HDR, int height, int width);
+private:
+	std::string kernel_filename;
 };

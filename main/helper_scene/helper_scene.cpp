@@ -103,6 +103,8 @@ void gui_start_basic_structure(gui_structure& gui, scene_structure& scene)
     ImGui::Checkbox("Camera", &gui.show_frame_camera); ImGui::SameLine();
     ImGui::Checkbox("Worldspace", &gui.show_frame_worldspace);
     ImGui::Spacing();
+    // ImGui::Text("CL Kernel: "); 
+    // ImGui::Spacing();
 
     if(gui.show_frame_camera)
     {
@@ -112,4 +114,26 @@ void gui_start_basic_structure(gui_structure& gui, scene_structure& scene)
     if(gui.show_frame_worldspace)
         draw(scene.frame_worldspace, scene.camera);
 
+}
+
+void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr)
+{
+    imgui_create_frame();
+
+    ImGui::Begin("GUI", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+    //ImGui::Text("Frame: "); ImGui::SameLine();
+    //ImGui::Checkbox("Camera", &gui.show_frame_camera); ImGui::SameLine();
+    //ImGui::Checkbox("Worldspace", &gui.show_frame_worldspace);
+    //ImGui::Spacing();
+    ImGui::Text("CL Kernel: "); ImGui::SameLine();  ImGui::Text(cl_mgr.get_filename().c_str());
+    ImGui::Spacing();
+
+    //if (gui.show_frame_camera)
+    //{
+    //    scene.frame_camera.uniform.transform.translation = -scene.camera.translation;
+    //    draw(scene.frame_camera, scene.camera);//  scene.frame_camera.draw(shaders.at("mesh"),scene.camera);
+    //}
+    //if (gui.show_frame_worldspace)
+    //    draw(scene.frame_worldspace, scene.camera);
 }
