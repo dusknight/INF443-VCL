@@ -475,28 +475,24 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 		if (!intersect_scene(spheres, triangles, &ray, &t, &hitsphere_id, &triangle_id, sphere_count, triangle_count, &hitrecord, seed0, seed1))
 			//return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 		{
+			// return accum_color += mask * (float3)(0.55f, 0.55f, 0.55f);
 			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
 			longlatX = longlatX < 0.f ? longlatX + 2 * PI : longlatX;  // wrap around full circle if negative
 			float longlatY = acos(ray.dir.y); // add RotateMap at some point, see Fragmentarium
 			// map theta and phi to u and v texturecoordinates in [0,1] x [0,1] range
 			float offsetY = 0.5f;
-			float u = longlatX / 2 * PI; // +offsetY;
-			float v = longlatY / PI;
+			float _u = longlatX / 2 * PI; // +offsetY;
+			float _v = longlatY / PI;
 
 			// map u, v to integer coordinates
-			int u2 = (int)(u * HDRwidth); //% HDRwidth;
-			int v2 = (int)(v * HDRheight); // % HDRheight;
+			int u2 = (int)(_u * HDRwidth); //% HDRwidth;
+			int v2 = (int)(_v * HDRheight); // % HDRheight;
 
 			// compute the texel index in the HDR map 
 			int HDRtexelidx = u2 + v2 * HDRwidth;
 
 			float4 HDRcol = HDRimg[HDRtexelidx];
-			//float4 HDRcol = tex1Dfetch(HDRtexture, HDRtexelidx);  // fetch from texture
-			// float3 HDRcol2 = { HDRcol.x, HDRcol.y, HDRcol.z };
-			// return (u, v, offsetY);
-			return accum_color += mask * (float3)(0.95f, 0.95f, 0.95f);
-			return HDRcol.xyz;
-			// return accum_color += (mask * HDRcol.xyz);	
+			return accum_color += (mask * HDRcol.xyz);
 		}
 
 		/* else, we've got a hit! Fetch the closest hit sphere */
@@ -547,7 +543,7 @@ render_kernel(
 	__write_only image2d_t outputImage, __read_only image2d_t inputImage, int reset,
 	__constant Sphere* spheres, const int width, const int height,
 	const int sphere_count, const int framenumber, __constant const Camera* cam,
-	float random0, float random1, __constant const float4* HDRimg)
+	float random0, float random1, __constant float4* HDRimg)
 {
 	const uint hashedframenumber = wang_hash(framenumber);
 	const int img_width = get_image_width(outputImage);

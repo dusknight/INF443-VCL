@@ -68,6 +68,11 @@ int buffer_reset = 0;
 int scene_changed = 0;
 
 
+HDRImage HDRresult;    
+int e = HDRLoader::load(HDRmapname, HDRresult);
+int HDRwidth = HDRresult.width;
+int HDRheight = HDRresult.height;
+
 void initScene(Sphere* cpu_spheres) {
     // floor
     cpu_spheres[0].radius = 200.0f;
@@ -101,41 +106,43 @@ void initScene(Sphere* cpu_spheres) {
 
 
 
-void initHDR(cl_manager cl_mgr) {
-    // initialise HDR environment map
-    // from https://graphics.stanford.edu/wikis/cs148-11-summer/HDRIlluminator
-
-    HDRImage HDRresult;
-    const char* HDRfile = HDRmapname;
-
-    if (HDRLoader::load(HDRfile, HDRresult))
-        printf("HDR environment map loaded. Width: %d Height: %d\n", HDRresult.width, HDRresult.height);
-    else {
-        printf("HDR environment map not found\nAn HDR map is required as light source. Exiting now...\n");
-        system("PAUSE");
-        exit(0);
-    }
-
-    int HDRwidth = HDRresult.width;
-    int HDRheight = HDRresult.height;
-
-    
-    cl_float4 * cpuHDRenv = new cl_float4[HDRwidth * HDRheight];
-    //_data = new RGBColor[width*height];
-
-    for (int i = 0; i < HDRwidth; i++) {
-        for (int j = 0; j < HDRheight; j++) {
-            int idx = 3 * (HDRwidth * j + i);
-            //int idx2 = width*(height-j-1)+i;
-            int idx2 = HDRwidth * (j)+i;
-            cpuHDRenv[idx2] = { HDRresult.colors[idx], HDRresult.colors[idx + 1], HDRresult.colors[idx + 2], 0.0f };
-        }
-    }
-
-    cl_mgr.setupBUfferHDR(cpuHDRenv, HDRheight, HDRwidth);
-    // copy HDR map to CL
-    cl_mgr.queue.enqueueWriteBuffer(cl_mgr.hdr_buffer, CL_TRUE, 0, sizeof(cl_float4)*HDRwidth*HDRheight, cpuHDRenv, 0);  // TODO: do we really need it?
-}
+//void initHDR(cl_manager cl_mgr) {
+//    // initialise HDR environment map
+//    // from https://graphics.stanford.edu/wikis/cs148-11-summer/HDRIlluminator
+//
+//    const char* HDRfile = HDRmapname;
+//
+//    if (HDRLoader::load(HDRfile, HDRresult))
+//        printf("HDR environment map loaded. Width: %d Height: %d\n", HDRresult.width, HDRresult.height);
+//    else {
+//        printf("HDR environment map not found\nAn HDR map is required as light source. Exiting now...\n");
+//        system("PAUSE");
+//        exit(0);
+//    }
+//
+//    int HDRwidth = HDRresult.width;
+//    int HDRheight = HDRresult.height;
+//
+//    
+//    cl_float4 * cpuHDRenv = new cl_float4[HDRwidth * HDRheight];
+//    //_data = new RGBColor[width*height];
+//
+//    for (int i = 0; i <HDRwidth ; i++) {
+//        for (int j = 0; j < HDRheight ; j++) {
+//            int idx = 3 * (HDRwidth * j + i);
+//            //int idx2 = width*(height-j-1)+i;
+//            int idx2 = HDRwidth * (j)+i;
+//            cpuHDRenv[idx2] = { HDRresult.colors[idx], HDRresult.colors[idx + 1], HDRresult.colors[idx + 2], 0.0f };
+//        }
+//    }
+//
+//    // int err = cl_mgr.setupBUfferHDR(cpuHDRenv, HDRheight, HDRwidth);
+//    int err = cl_mgr.setupBUfferHDR(HDRresult.colors, HDRheight, HDRwidth);
+//    // copy HDR map to CL
+//    
+//    // cl_mgr.queue.enqueueWriteBuffer(cl_mgr.hdr_buffer, CL_TRUE, 0, sizeof(cl_float4)*50*50, cpuHDRenv);  // TODO: do we really need it?
+//    // cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
+//}
 
 
 
@@ -374,8 +381,7 @@ int main()
     
     // initialise OpenCL
     cl_mgr.initOpenCL();
-    // create HDR
-    initHDR(cl_mgr);
+;
     // create FBO
     setupBufferFBO();  // first GL
     // createVBO(&vbo);
@@ -395,12 +401,27 @@ int main()
     interactiveCamera->changeYaw(0.1);
     cl_mgr.cl_spheres = Buffer(cl_mgr.context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
     cl_mgr.cl_camera = Buffer(cl_mgr.context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(Camera), interactiveCamera);
+    // create HDR
+     //initHDR(cl_mgr);
+    cl_float4 * cpuHDRenv = new cl_float4[HDRwidth * HDRheight];
+    //_data = new RGBColor[width*height];
+
+    for (int i = 0; i <HDRwidth ; i++) {
+        for (int j = 0; j < HDRheight ; j++) {
+            int idx = 3 * (HDRwidth * j + i);
+            //int idx2 = width*(height-j-1)+i;
+            int idx2 = HDRwidth * (j)+i;
+            cpuHDRenv[idx2] = { HDRresult.colors[idx], HDRresult.colors[idx + 1], HDRresult.colors[idx + 2], 0.0f };
+        }
+    }
+    cl_mgr.hdr_buffer = cl::Buffer(cl_mgr.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(cl_float4) * HDRwidth * HDRheight, cpuHDRenv, &err);
+
     // hostRendercam = (Camera*) queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
     
     // clEnqueueMapBuffer
 	// intitialise the kernel
     cl_mgr.initCLKernel(buffer_switch, buffer_reset, window_width, window_height, sphere_count, framenumber);
-
+    // err = cl_mgr.queue.enqueueWriteBuffer(cl_mgr.hdr_buffer, CL_TRUE, 0, sizeof(cl_float) * 5, HDRresult.colors);  // TODO: do we really need it?
 
     // ************************************** //
     // Animation loop
@@ -458,6 +479,7 @@ int main()
         cl_mgr.kernel.setArg(8, cl_mgr.cl_camera);
         cl_mgr.kernel.setArg(9, rand());
         cl_mgr.kernel.setArg(10, rand());
+        cl_mgr.kernel.setArg(11, cl_mgr.hdr_buffer);
 
         runKernel();
 
