@@ -79,3 +79,8 @@
 1478	2628	613239787	CMakeFiles/pgm.dir/vcl/wrapper/glfw/window/window.cpp.obj	2d25be7120b6d147
 1965	2650	613239787	CMakeFiles/pgm.dir/vcl/shape/segment/segments_drawable/segments_drawable_uniform/segments_drawable_uniform.cpp.obj	e6aa13d6d66e03cb
 1617	1956	613246917	pgm.exe	297131ccc998e46a
+13	1376	613257344	CMakeFiles/pgm.dir/main/main.cpp.obj	53832742c228cde
+14	1123	613257358	CMakeFiles/pgm.dir/cl_ext/cl_manager.cpp.obj	20479dbe965b3812
+1126	1354	613257358	pgm.exe	297131ccc998e46a
+10	1144	613257499	CMakeFiles/pgm.dir/main/main.cpp.obj	53832742c228cde
+1147	1340	613257499	pgm.exe	297131ccc998e46a
