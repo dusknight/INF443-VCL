@@ -522,7 +522,7 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 			int HDRtexelidx = u2 + v2 * HDRwidth;
 
 			float4 HDRcol = HDRimg[HDRtexelidx];
-			return accum_color += (mask + HDRcol.xyz);
+			return accum_color += (mask * HDRcol.xyz);
 			//float3 addColor= (float3)((float)u2/ HDRwidth, (float)v2 / HDRheight, 0.55f);
 			//return accum_color += (mask + addColor);
 		}
