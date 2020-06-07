@@ -586,13 +586,13 @@ void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int acti
     }
     if (key == GLFW_KEY_HOME && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
-        interactiveCamera->changeRadius(0.2);
+        interactiveCamera->changeApertureDiameter(0.2);
         scene_changed = 1;
     }
 
     if (key == GLFW_KEY_END && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
-        interactiveCamera->changeRadius(-0.2);
+        interactiveCamera->changeApertureDiameter(-0.2);
         scene_changed = 1;
     }
 
