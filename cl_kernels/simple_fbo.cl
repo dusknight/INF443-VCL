@@ -27,7 +27,7 @@ typedef struct HITRECORD{
 	float3 color;
 	float3 emission;
 } HITRECORD;
-/* typePara: 0 means Sphere, 1 means triangle. materialPara: 0 means lambertian, 1 means metal*/
+/* typePara: 0 means Sphere, 1 means triangle. materialPara: 0 means lambertian, 1 means metal, 2means dielectrics.*/
 typedef struct Sphere {
 	float radius;
 	int materialPara;
@@ -281,6 +281,52 @@ void reflect_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECORD* 
 
 }
 
+void retraction_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECORD* hitrecord, unsigned int* seed0, unsigned int* seed1) {
+	float neta = 1.33f;
+
+	*seed0 += 331;
+	*seed1 += 133;
+
+	hitrecord->color = sphere.color;
+	hitrecord->emission = sphere.emission;
+
+	float3 hitpoint = ray->origin + ray->dir * TIMEintersection;
+	hitrecord->hittime = TIMEintersection;
+	hitrecord->p = hitpoint;
+
+	float3 normal = normalize(hitpoint - sphere.pos);
+	if (dot(normal, ray->dir) > 0.0f) {
+		neta = 1.0 / neta;
+		normal = normal * (-1.0f);
+	}
+	float3 normal_facing = normal;
+	hitrecord->normal = normal_facing;
+
+
+	float costheta = dot(-normalize(ray->dir), normal_facing);
+	float sintheta = sqrt(1 - costheta * costheta);
+	float3 n = normal_facing;
+	float3 w = nomalize(ray->dir + dot(ray->dir, n) * n);
+	float3 newdir;
+	if (sintheta / neta > 1.0f) {
+		newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
+	}
+	else {
+		float temp_rand = dai_float_01(*seed0);
+		*seed0 += 331;
+		if (temp_rand > 0.85) {
+			newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
+		}
+		else {
+			float costhetaprime = sqrt(1 - (sintheta / neta) * (sintheta / neta));
+			float tanthetaprime = (sintheta / neta) / costhetaprime;
+			newdir = -n + tanthetaprime * w;
+		}
+	}
+	ray->origin = hitpoint + normal_facing * EPSILON;
+	ray->dir = newdir;
+}
+
 float intersect_triangle(const Triangle* triangle, Ray* ray)
 {
 	float3 vec_test = triangle->vertex1 - ray->origin;
@@ -326,6 +372,7 @@ float intersect_triangle(const Triangle* triangle, Ray* ray)
 	float3 sa = normalize(cross(a, b));
 	float3 sb = normalize(cross(b, c));
 	float3 sc = normalize(cross(c, a));
+
 
 	if (dot(sa, sb) > 0.9999 && dot(sb, sc) > 0.9999 && dot(sc, sa) > 0.9999) {
 		return TIMEintersect;
@@ -455,6 +502,9 @@ bool intersect_scene(__constant Sphere* spheres, __constant Triangle* triangles,
 			if (hitrecord->materialPara == 1) {
 				reflect_sphere(spheres[*sphere_id], ray, *t, hitrecord, seed0, seed1);
 			}
+			if (hitrecord->materialPara == 2) {
+				retraction_sphere(spheres[*sphere_id], ray, *t, hitrecord, seed0, seed1);
+			}
 		}
 		if (type == 1) {
 		hitrecord->materialPara = triangles[*triangle_id].materialPara;
@@ -506,10 +556,9 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 		{
 			// return accum_color += mask * (float3)(0.15f, 0.15f, 0.15f);
 			
-			float longlatX = atan2(ray.dir.x, ray.dir.z) / 8; // Y is up, swap x for y and z for x
-			// float longlatX = atan2(ray.dir.z, ray.dir.x); // Y is up, swap x for y and z for x
-			longlatX = longlatX < 0.f ? longlatX + 2 * PI : longlatX;  // wrap around full circle if negative
-			//float longlatY = acos(ray.dir.y); // add RotateMap at some point, see Fragmentarium
+			float longlatX = atan2(ray.dir.x, ray.dir.z); // Y is up, swap x for y and z for x
+			longlatX = longlatX < 0.f ? longlatX + 2 * PI : longlatX;
+			longlatX = longlatX / 10.0f;// wrap around full circle if negative
 			float longlatY = acos(ray.dir.y); // add RotateMap at some point, see Fragmentarium
 			// map theta and phi to u and v texturecoordinates in [0,1] x [0,1] range
 			float offsetY = 0.5f;
@@ -524,7 +573,7 @@ float3 trace(__constant Sphere* spheres, __constant Triangle* triangles, Ray* ca
 			int HDRtexelidx = u2 + v2 * HDRwidth;
 
 			float4 HDRcol = HDRimg[HDRtexelidx];
-			return accum_color += (mask * HDRcol.xyz*2);
+			return accum_color += (mask * HDRcol.xyz)*2;
 			//float3 addColor= (float3)((float)u2/ HDRwidth, (float)v2 / HDRheight, 0.55f);
 			//return accum_color += (mask + addColor);
 		}
