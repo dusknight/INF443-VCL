@@ -326,6 +326,7 @@ float intersect_triangle(const Triangle* triangle, Ray* ray)
 	float3 sb = normalize(cross(b, c));
 	float3 sc = normalize(cross(c, a));
 
+
 	if (dot(sa, sb) > 0.9999 && dot(sb, sc) > 0.9999 && dot(sc, sa) > 0.9999) {
 		return TIMEintersect;
 	}
