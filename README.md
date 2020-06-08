@@ -28,6 +28,8 @@ Instructions could be found here:
 
 ## Run
 - Put the kerenl files in the right directory
+  - CL kernel: `../../../cl_kernels/simple_fbo.cl` of the working dir.
+  - HDR image: `../../../data/Mans_Outside_2k.hdr`.
 - Execute program
 - Indicate OpenCL platform and device
 - Try the program, control your camara with keyboard 
