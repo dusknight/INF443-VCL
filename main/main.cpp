@@ -148,6 +148,16 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
 	
 }
 
+void updateScene(Sphere* cpu_spheres, Triangle* cpu_triangles, bool update_spheres, bool update_triangles) 
+{
+    if (update_spheres || update_triangles) scene_changed = 1;
+    if (update_spheres) {
+        cpu_spheres[0].position.y += 0.01f;
+    }
+    if (update_triangles) {
+
+    }
+}
 
 
 //void initHDR(cl_manager cl_mgr) {
@@ -476,8 +486,6 @@ int main()
     cl::Event ev_buffer;
     while( !glfwWindowShouldClose(gui.window) )
     {
-        if (scene_changed) buffer_reset = 1;
-        opengl_debug();
 
         // Clear all color and zbuffer information before drawing on the screen
         clear_screen();opengl_debug();
@@ -487,10 +495,13 @@ int main()
         // Create the basic gui structure with ImGui
         gui_start_basic_structure(gui, cl_mgr, interactiveCamera);
 
+        framenumber++;
+
         // Perform computation and draw calls for each iteration loop
         // scene_current.frame_draw(shaders, scene, gui); opengl_debug();
         // render(gui.window);
         // framenumber++;
+        updateScene(cpu_spheres, cpu_triangles, gui.update_spheres, gui.update_triangles);
 
         // host to device: write
         err = cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
@@ -501,17 +512,14 @@ int main()
         //    framenumber = 0;
         //}
         // buffer_reset = false;
-        framenumber++;
 
-        // build a new camera for each frame on the CPU
-        // interactiveCamera->changePitch(0.5);
-        // delete hostRendercam;
-        // hostRendercam = new Camera;
+        // update Camera
         interactiveCamera->buildRenderCamera(hostRendercam);
+        // copy the host camera to a OpenCL camera
         cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam, 0);
 
-        // copy the host camera to a OpenCL camera
-        
+        if (scene_changed) buffer_reset = 1;
+
     
         // queue.enqueueMapBuffer(cl_camera, CL_TRUE, CL_MAP_WRITE, 0, sizeof(Camera));
         // update params

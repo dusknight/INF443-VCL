@@ -142,4 +142,8 @@ void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr, Interacti
     ImGui::Begin("Camera", NULL, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("Aperture Radius: "); ImGui::SameLine();  ImGui::Text(std::to_string(interactiveCamera->getApertureRadius()).c_str());
     ImGui::Text("Focal Distance: "); ImGui::SameLine();  ImGui::Text(std::to_string(interactiveCamera->getFocalDistance()).c_str());
+    ImGui::Spacing();
+    ImGui::Text("Press HOME or END to change Aperture"); 
+    ImGui::Text("Press UP, DOWN, LEFT or RIGHT to change view directions.");
+    ImGui::Text("Press A or W to change camara position.");
 }
