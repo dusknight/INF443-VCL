@@ -8,7 +8,10 @@ add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_GLAD)
 if(UNIX)
 add_definitions(-g -O2 -std=c++11 -Wall -Wextra)
     set(CMAKE_CXX_COMPILER g++)
-    find_package(glfw3 REQUIRED) #Expect glfw3 to be installed on your system
+    #find_package(glfw3 REQUIRED) #Expect glfw3 to be installed on your system
+    
+    set(OpenCL_INCLUDE_DIRS "/home/public/intel/system_studio_2020/opencl/SDK/include")
+    set(OpenCL_LIBRARY "/home/public/intel/system_studio_2020/opencl/SDK/lib64/libOpenCL.so")
 endif()
 
 # In Window set directory to precompiled version of glfw3
@@ -19,11 +22,12 @@ if(WIN32)
     set(GLFW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/lib_windows/glfw3_win/lib/glfw3.lib")
 endif()
 
-find_package(OpenCL REQUIRED)
+# find_package(OpenCL REQUIRED)
 include_directories( ${OpenCL_INCLUDE_DIRS} )
-
+include_directories( ${GLFW_INCLUDE_DIRS} )
 find_package(OpenGL REQUIRED)
 
+include_directories( "/usr/local/include/")
 include_directories(".")
 include_directories("third_party/eigen/")
 include_directories("third_party/glad/include")

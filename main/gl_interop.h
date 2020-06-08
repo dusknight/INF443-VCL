@@ -1,8 +1,8 @@
 #pragma once
 
-#include <GLFW\glfw3.h>
-#include <glad\glad.hpp>
-#include <CL\cl.hpp>
+#include "GLFW/glfw3.h"
+#include <glad/glad.hpp>
+#include <CL/cl.hpp>
 
 #if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenCL/opencl.h>
