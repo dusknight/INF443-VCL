@@ -120,13 +120,16 @@ void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr, Interacti
 {
     imgui_create_frame();
 
-    ImGui::Begin("INFO", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Begin("Scene INFO", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
     //ImGui::Text("Frame: "); ImGui::SameLine();
     //ImGui::Checkbox("Camera", &gui.show_frame_camera); ImGui::SameLine();
     //ImGui::Checkbox("Worldspace", &gui.show_frame_worldspace);
     //ImGui::Spacing();
-    ImGui::Text("CL Kernel: "); ImGui::SameLine();  ImGui::Text(cl_mgr.get_filename().c_str());
+    ImGui::Text("CL Kernel : "); ImGui::SameLine();  ImGui::Text(cl_mgr.get_filename().c_str());
+    ImGui::Text("Update obj: "); ImGui::SameLine();
+    ImGui::Checkbox("Triangles", &gui.update_triangles); ImGui::SameLine();
+    ImGui::Checkbox("Spheres", &gui.update_spheres);
     ImGui::Spacing();
     ImGui::End();
     //if (gui.show_frame_camera)
