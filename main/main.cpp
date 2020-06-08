@@ -148,9 +148,6 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
 	
 }
 
-void updateScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
-
-}
 
 
 //void initHDR(cl_manager cl_mgr) {
@@ -213,12 +210,11 @@ void runKernel() {
     //    glDrawBuffer(GL_COLOR_ATTACHMENT0);
     //    glClear(GL_COLOR_BUFFER_BIT);
     //}
-
     //Make sure OpenGL is done using the VBOs
     glFinish();
 
     cl_int err_code;
-    // pass FBOs to kernel
+    //this passes in the vector of VBO buffer objects => RBO objects
     err_code= cl_mgr.queue.enqueueAcquireGLObjects(&cl_mgr.image_buffers);
     if (err_code != CL_SUCCESS) {
         std::cerr << "ERROR in locking texture : " << err_code << std::endl;
@@ -232,7 +228,8 @@ void runKernel() {
     }
     cl_mgr.queue.finish();
 
-    //Release the FBOs so OpenGL can play with them
+    //Release the VBOs so OpenGL can play with them
+    // err_code = queue.enqueueReleaseGLObjects(&cl_vbos);
     err_code = cl_mgr.queue.enqueueReleaseGLObjects(&cl_mgr.image_buffers);
     if (err_code != CL_SUCCESS) {
         std::cerr << "ERROR in unlocking texture :" << err_code << std::endl;
@@ -479,8 +476,8 @@ int main()
     cl::Event ev_buffer;
     while( !glfwWindowShouldClose(gui.window) )
     {
-        // RESET freamebuffer if changed
         if (scene_changed) buffer_reset = 1;
+        opengl_debug();
 
         // Clear all color and zbuffer information before drawing on the screen
         clear_screen();opengl_debug();
@@ -498,15 +495,27 @@ int main()
         // host to device: write
         err = cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere), cpu_spheres);
         err = cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_triangles, CL_TRUE, 0, triangle_count * sizeof(Triangle), cpu_triangles);
-
+        //if (buffer_reset) {
+        //    float arg = 0;
+        //    queue.enqueueFillBuffer(cl_accumbuffer, arg, 0, window_width * window_height * sizeof(cl_float3));
+        //    framenumber = 0;
+        //}
+        // buffer_reset = false;
         framenumber++;
 
-        // update camera
+        // build a new camera for each frame on the CPU
+        // interactiveCamera->changePitch(0.5);
+        // delete hostRendercam;
+        // hostRendercam = new Camera;
         interactiveCamera->buildRenderCamera(hostRendercam);
-        // copy the host camera to a OpenCL camera
         cl_mgr.queue.enqueueWriteBuffer(cl_mgr.cl_camera, CL_TRUE, 0, sizeof(Camera), hostRendercam, 0);
+
+        // copy the host camera to a OpenCL camera
         
+    
+        // queue.enqueueMapBuffer(cl_camera, CL_TRUE, CL_MAP_WRITE, 0, sizeof(Camera));
         // update params
+
         cl_mgr.kernel.setArg(2, buffer_reset);
         cl_mgr.kernel.setArg(3, cl_mgr.cl_spheres);  // in case that spheres move
         cl_mgr.kernel.setArg(4, cl_mgr.cl_triangles);
@@ -515,11 +524,10 @@ int main()
         cl_mgr.kernel.setArg(11, rand());
         cl_mgr.kernel.setArg(12, rand());
         cl_mgr.kernel.setArg(13, cl_mgr.hdr_buffer);
-        
-        ///////////////////////////// calc & draw ////////////////////////
 
         runKernel();
 
+        // draw
 
         ////////////////////////////// GUI ////////////////////////////
         // Render GUI and update window

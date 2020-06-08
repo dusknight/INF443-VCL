@@ -49,11 +49,6 @@ public:
 	cl::Buffer hdr_buffer;
 
 	std::string get_filename();
-	//std::string get_platform_name();
-	//std::string get_device_name();
-	//unsigned int get_device_max_cu();
-	//unsigned int get_device_max_wg_size();
-
 	void setup_dev(cl_context_properties* properties, cl_device_id device_id, cl_platform_id platform_id);
 
 	void pickDevice(const std::vector<cl::Device>& devices);
@@ -75,9 +70,5 @@ public:
 	bool setupBUfferHDR(cl_float4* cpu_HDR, int height, int width);
 	bool setupBUfferHDR(cl_float* cpu_HDR, int height, int width);
 private:
-	//std::string kernel_filename;
-	//std::string platform_name;
-	//std::string device_name;
-	unsigned int device_max_cu;
-	unsigned int device_max_wg_size;
+	std::string kernel_filename;
 };

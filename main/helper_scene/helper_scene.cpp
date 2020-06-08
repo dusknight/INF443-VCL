@@ -126,12 +126,7 @@ void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr, Interacti
     //ImGui::Checkbox("Camera", &gui.show_frame_camera); ImGui::SameLine();
     //ImGui::Checkbox("Worldspace", &gui.show_frame_worldspace);
     //ImGui::Spacing();
-    ImGui::Text("CL Kernel  : "); ImGui::SameLine();  ImGui::Text(cl_mgr.get_filename().c_str());
-    //ImGui::Text("CL Platform: "); ImGui::SameLine();  ImGui::Text(cl_mgr.get_platform_name().c_str());
-    //ImGui::Text("CL Device  : "); ImGui::SameLine();  ImGui::Text(cl_mgr.get_device_name().c_str());
-    //ImGui::Text("Device max workgroup size: "); ImGui::SameLine();  ImGui::Text(std::to_string(cl_mgr.get_device_max_wg_size()).c_str());
-    ImGui::Text("Movement: "); ImGui::SameLine(); ImGui::Checkbox("Triangles", &gui.update_triangles); ImGui::SameLine();
-    ImGui::Checkbox("Spheres", &gui.update_spheres);
+    ImGui::Text("CL Kernel: "); ImGui::SameLine();  ImGui::Text(cl_mgr.get_filename().c_str());
     ImGui::Spacing();
     ImGui::End();
     //if (gui.show_frame_camera)
@@ -144,5 +139,4 @@ void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr, Interacti
     ImGui::Begin("Camera", NULL, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("Aperture Radius: "); ImGui::SameLine();  ImGui::Text(std::to_string(interactiveCamera->getApertureRadius()).c_str());
     ImGui::Text("Focal Distance: "); ImGui::SameLine();  ImGui::Text(std::to_string(interactiveCamera->getFocalDistance()).c_str());
-    // ImGui::End();
 }

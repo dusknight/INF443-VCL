@@ -33,26 +33,6 @@ std::string cl_manager::get_filename()
     return kernel_filename;
 }
 
-std::string cl_manager::get_platform_name()
-{
-    return platform_name;
-}
-
-std::string cl_manager::get_device_name()
-{
-    return device_name;
-}
-
-unsigned int cl_manager::get_device_max_cu()
-{
-    return device_max_cu;
-}
-
-unsigned int cl_manager::get_device_max_wg_size()
-{
-    return device_max_wg_size;
-}
-
 void cl_manager::setup_dev(cl_context_properties* properties, cl_device_id device_id, cl_platform_id platform_id) {
 	// Load extension
 	clGetGLContextInfoKHR_fn clGetGLContextInfoKHR = NULL;
@@ -105,7 +85,6 @@ void cl_manager::pickPlatform(const std::vector<cl::Platform>& platforms) {
 			std::cin >> input;
 		}
 		platform = platforms[input - 1];
-        // platform_name = platforms[input - 1].getInfo<CL_PLATFORM_NAME>();
 	}
 }
 
@@ -258,11 +237,11 @@ void cl_manager::initOpenCL()
     // Get all available OpenCL platforms (e.g. AMD OpenCL, Nvidia CUDA, Intel OpenCL)
     vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
-    cout << "[INFO] Available OpenCL platforms : " << endl << endl;
+    cout << "Available OpenCL platforms : " << endl << endl;
     for (int i = 0; i < platforms.size(); i++)
         cout << "\t" << i + 1 << ": " << platforms[i].getInfo<CL_PLATFORM_NAME>() << endl;
 
-    cout << endl << "[WARNING] : " << endl << endl;
+    cout << endl << "WARNING: " << endl << endl;
     cout << "OpenCL-OpenGL interoperability is only tested " << endl;
     cout << "on discrete GPUs from Nvidia and AMD" << endl;
     cout << "Other devices (such as Intel integrated GPUs) may fail" << endl << endl;
@@ -270,13 +249,13 @@ void cl_manager::initOpenCL()
     // Pick one platform
     // Platform platform;
     pickPlatform(platforms);
-    cout << "\n[INFO] Using OpenCL platform: \t" << platform.getInfo<CL_PLATFORM_NAME>() << endl;
+    cout << "\nUsing OpenCL platform: \t" << platform.getInfo<CL_PLATFORM_NAME>() << endl;
 
     // Get available OpenCL devices on platform
     vector<cl::Device> devices;
     platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
 
-    cout << "[INFO] Available OpenCL devices on this platform: " << endl << endl;
+    cout << "Available OpenCL devices on this platform: " << endl << endl;
     for (int i = 0; i < devices.size(); i++) {
         cout << "\t" << i + 1 << ": " << devices[i].getInfo<CL_DEVICE_NAME>() << endl;
         cout << "\t\tMax compute units: " << devices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << endl;
@@ -286,9 +265,6 @@ void cl_manager::initOpenCL()
     // Pick one device
     pickDevice(devices);
     cout << "\nUsing OpenCL device: \t" << device.getInfo<CL_DEVICE_NAME>() << endl;
-    //device_name = device.getInfo<CL_DEVICE_NAME>();
-    //device_max_cu = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-    //device_max_wg_size = device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
 
 #if defined _WIN32
     static cl_context_properties properties[] =
@@ -355,7 +331,7 @@ void cl_manager::initOpenCL()
         std::cerr << "Build log for " << name << ":" << std::endl
             << buildlog << std::endl;
         printErrorLog(program, device);
-        // system("PAUSE");
+        system("PAUSE");
     }
 }
 
