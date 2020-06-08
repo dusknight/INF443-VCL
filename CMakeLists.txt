@@ -44,7 +44,7 @@ add_executable(pgm ${source_files})
 
 
 if(UNIX)
-target_link_libraries(pgm glfw dl -static-libstdc++)
+target_link_libraries(pgm glfw ${OpenCL_LIBRARY} OpenGL::GL dl -static-libstdc++)
 endif()
 
 if(WIN32)
