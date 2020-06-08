@@ -21,6 +21,8 @@ struct gui_structure
 
     bool show_frame_camera     = true;
     bool show_frame_worldspace = false;
+    bool update_triangles = false;
+    bool update_spheres = false;
 };
 
 
