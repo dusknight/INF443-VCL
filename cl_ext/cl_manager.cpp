@@ -1,5 +1,5 @@
 #include "cl_ext/cl_manager.h"
-#include <GLFW\glfw3.h>
+#include "GLFW/glfw3.h"
 
 #include <iostream>
 #include <fstream>
@@ -146,6 +146,7 @@ int cl_manager::test_cl()
 
     // Create an OpenCL context on that device.
     // the context manages all the OpenCL resources 
+#if defined _WIN32
     static cl_context_properties properties[] =
     {
         CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
@@ -153,6 +154,23 @@ int cl_manager::test_cl()
         CL_CONTEXT_PLATFORM, (cl_context_properties)platform(),
         0
     };
+#elif defined __linux
+    static cl_context_properties properties[] =
+    {
+        CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
+        CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
+        CL_CONTEXT_PLATFORM, (cl_context_properties)platform(),
+        0
+    };
+#elif defined(__APPLE__) || defined(__MACOSX)
+    CGLContextObj glContext = CGLGetCurrentContext();
+    CGLShareGroupObj shareGroup = CGLGetShareGroup(glContext);
+    static cl_context_properties properties[] =
+    {
+        CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,(cl_context_properties)shareGroup,
+        0
+    };
+#endif // _WIN_32
 
     setup_dev(properties, device(), platform());
     Context context = Context(device, properties);
