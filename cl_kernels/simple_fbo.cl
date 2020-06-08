@@ -7,10 +7,10 @@ __constant float EPSILON = 0.00003f; /* required to compensate for limited float
 __constant float PI = 3.14159265359f;
 __constant int SAMPLES = 4;
 
-//__constant int HDRwidth = 3200;
-//__constant int HDRheight = 1600;
-__constant int HDRwidth = 2048;
-__constant int HDRheight = 1024;
+__constant int HDRwidth = 3200;
+__constant int HDRheight = 1600;
+//__constant int HDRwidth = 2048;
+//__constant int HDRheight = 1024;
 
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
 CLK_ADDRESS_CLAMP_TO_EDGE |
