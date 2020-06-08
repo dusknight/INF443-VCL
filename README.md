@@ -6,7 +6,7 @@ by Shikang DU and Mingyu ZHANG
 ## Features
 
 - Real-time ray tracing
-- Accumulative rendering
+- Progressive rendering
 - Reflection and refraction material
 - Movement of objects and interactive camara control.
 
