@@ -7,8 +7,10 @@ __constant float EPSILON = 0.00003f; /* req2uired to compensate for limited floa
 __constant float PI = 3.14159265359f;
 __constant int SAMPLES = 4;
 
-__constant int HDRwidth = 3200;
-__constant int HDRheight = 1600;
+//__constant int HDRwidth = 3200;
+//__constant int HDRheight = 1600;
+__constant int HDRwidth = 2048;
+__constant int HDRheight = 1024;
 
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
 CLK_ADDRESS_CLAMP_TO_EDGE |
@@ -308,22 +310,24 @@ void retraction_sphere(Sphere sphere, Ray* ray, float TIMEintersection, HITRECOR
 	float3 n = normal_facing;
 	float3 w = normalize(ray->dir + dot(ray->dir, n) * n);
 	float3 newdir;
-	if (sintheta / neta > 1.0f) {
+	if (sintheta > neta) {
 		newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
 	}
-	if (sintheta / neta <= 1.0f) {
+	else
+	{
 		float temp_rand = dai_float_01(*seed0);
 		*seed0 += 331;
-		if (temp_rand > 0.85f) {
+		if (temp_rand > 65.0f) { // part reflection
 			newdir = ray->dir - 2 * dot(ray->dir, normal_facing) * normal_facing;
 		}
-		else {
+		else 
+		{
 			float costhetaprime = sqrt(1 - (sintheta / neta) * (sintheta / neta));
 			float tanthetaprime = (sintheta / neta) / costhetaprime;
 			newdir = -n + tanthetaprime * w;
 		}
 	}
-	ray->origin = hitpoint + normal_facing * EPSILON;
+	ray->origin = hitpoint - normal_facing * EPSILON;
 	ray->dir = newdir;
 }
 

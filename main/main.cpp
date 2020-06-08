@@ -44,8 +44,9 @@ using namespace cl;
 const float camera_move_step = 0.5f;
 const std::string cl_kernel_filename = "../../../cl_kernels/simple_fbo.cl";
 const int sphere_count = 6;
-const int triangle_count = 1;
-const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
+const int triangle_count = 2;
+// const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
+const char* HDRmapname = "../../../data/Mans_Outside_2k.hdr";
 
 // OpenCL objects
 cl_manager cl_mgr(cl_kernel_filename);
@@ -107,8 +108,8 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
     cpu_spheres[0].radius = 0.45f;
     cpu_spheres[0].materialPara = 2;
     cpu_spheres[0].position = { 0.0f, 0.00f, -0.0f };
-    cpu_spheres[0].color = { 0.85f, 0.7f, 0.1f };
-    cpu_spheres[0].emission = { 0.05f, 0.05f, 0.03f };
+    cpu_spheres[0].color = { 0.9f, 0.9f, 0.9f };
+    cpu_spheres[0].emission = { 0.00f, 0.00f, 0.00f };
 
     // Real lightsource
     cpu_spheres[5].radius = 0.15f;
@@ -123,6 +124,13 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
     cpu_triangles[0].materialPara = 1;
     cpu_triangles[0].color = { 0.5f, 0.0f, 0.5f };
     cpu_triangles[0].emission = { 0.10f, 0.10f, 0.10f };
+
+    cpu_triangles[1].vertex1 = { 1.1f, +1.5f, 0.0f };
+    cpu_triangles[1].vertex2 = { -1.1f, +1.5f, 0.0f };
+    cpu_triangles[1].vertex3 = { 0.0f, +1.5f, 1.1f };
+    cpu_triangles[1].materialPara = 1;
+    cpu_triangles[1].color = { 0.5f, 0.5f, 0.5f };
+    cpu_triangles[1].emission = { 0.10f, 0.10f, 0.10f };
 	
 }
 
