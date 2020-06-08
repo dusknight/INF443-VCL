@@ -45,7 +45,7 @@ typedef struct Triangle {
 	float3 color;
 	float3 emission;
 	int materialPara;
-
+	float pad[3];
 }Triangle;
 
 typedef struct Object {

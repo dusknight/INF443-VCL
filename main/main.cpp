@@ -44,7 +44,7 @@ using namespace cl;
 const float camera_move_step = 0.5f;
 const std::string cl_kernel_filename = "../../../cl_kernels/simple_fbo.cl";
 const int sphere_count = 6;
-const int triangle_count = 2;
+const int triangle_count = 4;
 // const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
 const char* HDRmapname = "../../../data/Mans_Outside_2k.hdr";
 
@@ -125,12 +125,26 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
     cpu_triangles[0].color = { 0.5f, 0.0f, 0.5f };
     cpu_triangles[0].emission = { 0.10f, 0.10f, 0.10f };
 
-    cpu_triangles[1].vertex1 = { 1.1f, +1.5f, 0.0f };
-    cpu_triangles[1].vertex2 = { -1.1f, +1.5f, 0.0f };
-    cpu_triangles[1].vertex3 = { 0.0f, +1.5f, 1.1f };
+    cpu_triangles[1].vertex1 = { 1.1f, 0.6f, 0.0f };
+    cpu_triangles[1].vertex2 = { 2.1f, 0.4f, 0.0f };
+    cpu_triangles[1].vertex3 = { 3.0f, 0.2f, 1.1f };
     cpu_triangles[1].materialPara = 1;
-    cpu_triangles[1].color = { 0.5f, 0.5f, 0.5f };
+    cpu_triangles[1].color = { 0.5f, 0.2f, 0.5f };
     cpu_triangles[1].emission = { 0.10f, 0.10f, 0.10f };
+
+    cpu_triangles[2].vertex1 = { -1.1f, 0.7f, -0.5f };
+    cpu_triangles[2].vertex2 = { -2.5f, 0.8f, 0.0f };
+    cpu_triangles[2].vertex3 = { -3.0f, 0.9f, 1.1f };
+    cpu_triangles[2].materialPara = 1;
+    cpu_triangles[2].color = { 0.5f, 0.5f, 0.0f };
+    cpu_triangles[2].emission = { 0.10f, 0.10f, 0.10f };
+
+    cpu_triangles[3].vertex1 = { 1.1f, 0.6f, 0.5f };
+    cpu_triangles[3].vertex2 = { 0.9f, 0.4f, 0.0f };
+    cpu_triangles[3].vertex3 = { -1.0f, -0.2f, 1.1f };
+    cpu_triangles[3].materialPara = 1;
+    cpu_triangles[3].color = { 0.0f, 0.6f, 0.5f };
+    cpu_triangles[3].emission = { 0.10f, 0.10f, 0.10f };
 	
 }
 
@@ -177,8 +191,6 @@ void initScene(Sphere* cpu_spheres, Triangle* cpu_triangles) {
 
 
 void runKernel() {
-    // every pixel in the image has its own thread or "work item",
-    // so the total amount of work items equals the number of pixels
     std::size_t global_work_size = window_width * window_height;
     std::size_t local_work_size = cl_mgr.kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(cl_mgr.device);;
 
@@ -264,17 +276,17 @@ void runKernel() {
     
 }
 
-void render() {
-    glReadBuffer(GL_COLOR_ATTACHMENT3);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBlitFramebuffer(
-        0, 0, window_width, window_height,
-        0, 0, window_width, window_height,
-        GL_COLOR_BUFFER_BIT,
-        GL_LINEAR); opengl_debug();
-    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();
-    //glDrawBuffer(GL_BACK); opengl_debug();
-}
+//void render() {
+//    glReadBuffer(GL_COLOR_ATTACHMENT3);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glBlitFramebuffer(
+//        0, 0, window_width, window_height,
+//        0, 0, window_width, window_height,
+//        GL_COLOR_BUFFER_BIT,
+//        GL_LINEAR); opengl_debug();
+//    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); opengl_debug();
+//    //glDrawBuffer(GL_BACK); opengl_debug();
+//}
 
 bool setupBufferFBO() {
     // clear previous buffers
@@ -583,13 +595,13 @@ void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int acti
 
     if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
-        interactiveCamera->changeYaw(-0.1); 
+        interactiveCamera->changeYaw(-0.05); 
         scene_changed = 1;
     }
 
     if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
-        interactiveCamera->changeYaw(0.1); 
+        interactiveCamera->changeYaw(0.05); 
         scene_changed = 1;
     }
     if (key == GLFW_KEY_HOME && (action == GLFW_PRESS || action == GLFW_REPEAT))
