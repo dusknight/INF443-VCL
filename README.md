@@ -1,36 +1,40 @@
-# INF443: 3D Computer Graphics Homework
-Computer science course provided by Ecole Polytechnique on algorithms and techniques in computer graphics. Topics covered in this set of exercises are:  
-1. Modeling
-    - Spline surfaces
-    - CSG tree
-2. Textures
-    - 2D texture plating
-    - Perlin noise
-    - Billboard
-3. Descriptive Animation
-    - Cardinal spline interpolation 
-    - Hierarchical animation
-4. Animation by simulation
+# INF443: 3D Computer Graphics Project
+An OpenCL based Real-time Path Tracer
 
-Most part of the exercises are contained in ./scenes/3D_graphics
+by Shikang DU and Mingyu ZHANG
+
+## Features
+
+- Real-time ray tracing
+- Accumulative rendering
+- Reflection and refraction material
+- Movement of objects and interactive camara control.
 
 ## Compilation
 
-The compilation can be done either using the provided
-* **Makefile**: Linux/MacOS only 
-* **CMakeLists.txt** using CMake (Linux/MacOS/Windows)
+The compilation can be done using  `CMAKE`.
 
 
-The library has one external dependency: [GLFW](https://www.glfw.org/) which can be installed through standard packages in Linux/MacOS (see the provided detailed tutorials).
+The library has one external dependency: 
+- [GLFW](https://www.glfw.org/) which can be installed through standard packages in Linux/MacOS (see the provided detailed tutorials).
+- OpenCL, above v1.2, which is provided by CUDA or AMD equivalant.
 
-
-
+Instructions could be found here:
 * [Command lines to compile in Linux/MacOS](doc/compilation.md#command_line)
 * **Detailed tutorials** to set up your system and compile on
   * [Linux/Ubuntu](doc/compilation.md#Ubuntu)
   * [MacOS](doc/compilation.md#MacOS)
   * [Windows](doc/visual_studio.md)
 
+## Run
+- Put the kerenl files in the right directory
+- Execute program
+- Indicate OpenCL platform and device
+- Try the program, control your camara with keyboard 
+
 ## Reference
 * [Course description](https://moodle.polytechnique.fr/course/view.php?id=7745)
 * [Original code](https://github.com/drohmer/inf443_vcl)
+* [GPU Ray tracing tutorial](http://raytracey.blogspot.com/2015/10/gpu-path-tracing-tutorial-1-drawing.html)
+* [Ray tracing in one weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
+* [Yune](https://github.com/gallickgunner/Yune)
