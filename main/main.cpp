@@ -45,8 +45,8 @@ const float camera_move_step = 0.5f;
 const std::string cl_kernel_filename = "../../../cl_kernels/simple_fbo.cl";
 const int sphere_count = 6;
 const int triangle_count = 4;
-const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
-// const char* HDRmapname = "../../../data/Mans_Outside_2k.hdr";
+// const char* HDRmapname = "../../../data/Topanga_Forest_B_3k.hdr";
+const char* HDRmapname = "../../../data/Mans_Outside_2k.hdr";
 
 // OpenCL objects
 cl_manager cl_mgr(cl_kernel_filename);

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 
+// some device setting code is from http://raytracey.blogspot.com/
+
 void printErrorLog(const cl::Program& program, const cl::Device& device) {
 
     // Get the error log and print to console
@@ -96,7 +98,7 @@ int cl_manager::test_cl()
     Platform::get(&platforms);
 
     // Show the names of all available OpenCL platforms
-    cout << "Available OpenCL platforms: \n\n";
+    cout << "*** Available OpenCL platforms: \n\n";
     for (unsigned int i = 0; i < platforms.size(); i++)
         cout << "\t" << i + 1 << ": " << platforms[i].getInfo<CL_PLATFORM_NAME>() << endl;
 
@@ -258,10 +260,10 @@ void cl_manager::initOpenCL()
     for (int i = 0; i < platforms.size(); i++)
         cout << "\t" << i + 1 << ": " << platforms[i].getInfo<CL_PLATFORM_NAME>() << endl;
 
-    cout << endl << "WARNING: " << endl << endl;
+    cout << endl << "[WARNING] " << endl << endl;
     cout << "OpenCL-OpenGL interoperability is only tested " << endl;
-    cout << "on discrete GPUs from Nvidia and AMD" << endl;
-    cout << "Other devices (such as Intel integrated GPUs) may fail" << endl << endl;
+    cout << "on discrete GPUs from Nvidia " << endl;
+    cout << "[WARNING]: Intel devices is not supported" << endl << endl;
 
     // Pick one platform
     // Platform platform;
