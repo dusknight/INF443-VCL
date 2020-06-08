@@ -1,9 +1,9 @@
-/* OpenCL based simple sphere path tracer by Sam Lapere, 2016*/
-/* based on smallpt by Kevin Beason */
+// Simple openCL ray tracer
+/* Inspired by */
 /* http://raytracey.blogspot.com */
-/* interactive camera and depth-of-field code based on GPU path tracer by Karl Li and Peter Kutz */
 
-__constant float EPSILON = 0.00003f; /* req2uired to compensate for limited float precision */
+
+__constant float EPSILON = 0.00003f; /* required to compensate for limited float precision */
 __constant float PI = 3.14159265359f;
 __constant int SAMPLES = 4;
 

@@ -157,6 +157,14 @@ void updateScene(Sphere* cpu_spheres, Triangle* cpu_triangles, bool update_spher
     if (update_triangles) {
         for (int i = 0; i < triangle_count; i++) {
             cl_float3 center = (cpu_triangles[i].vertex1 + cpu_triangles[i].vertex2 + cpu_triangles[i].vertex3) / 3;
+            center.x *= 0.01;
+            center.y *= 0.01;
+            center.z *= 0.01;
+            cpu_triangles[i].vertex1 = cpu_triangles[i].vertex1 + center;
+            cpu_triangles[i].vertex2 = cpu_triangles[i].vertex2 + center;
+            cpu_triangles[i].vertex3 = cpu_triangles[i].vertex3 + center;
+
+
             // center * center;
         }
     }
