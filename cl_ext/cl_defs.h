@@ -23,6 +23,7 @@
 #endif // (__linux)
 
 #include <CL/cl.h>
+#include <CL/cl.hpp>
 #include <CL/cl_gl.h>
 #define CL_GL_SHARING_EXT "cl_khr_gl_sharing"
 #endif // if defined(__APPLE__) || defined(__MACOSX)

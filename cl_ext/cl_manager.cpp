@@ -73,9 +73,8 @@ void cl_manager::pickPlatform(const std::vector<cl::Platform>& platforms) {
 	else {
 		int input = 0;
 		std::cout << "\nChoose an OpenCL platform: ";
-		// TODO:
-		// cin >> input;
-		input = 1;
+		cin >> input;
+		// input = 1;
 
 		// handle incorrect user input
 		while (input < 1 || input > platforms.size()) {
