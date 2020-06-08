@@ -1,3 +1,0 @@
-C:/Users/chang/source/repos/INF443-VCLhdr/out/build/x64-Debug/CMakeFiles/pgm.dir
-C:/Users/chang/source/repos/INF443-VCLhdr/out/build/x64-Debug/CMakeFiles/edit_cache.dir
-C:/Users/chang/source/repos/INF443-VCLhdr/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir

@@ -116,11 +116,11 @@ void gui_start_basic_structure(gui_structure& gui, scene_structure& scene)
 
 }
 
-void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr)
+void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr, InteractiveCamera * interactiveCamera)
 {
     imgui_create_frame();
 
-    ImGui::Begin("GUI", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Begin("INFO", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
     //ImGui::Text("Frame: "); ImGui::SameLine();
     //ImGui::Checkbox("Camera", &gui.show_frame_camera); ImGui::SameLine();
@@ -128,7 +128,7 @@ void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr)
     //ImGui::Spacing();
     ImGui::Text("CL Kernel: "); ImGui::SameLine();  ImGui::Text(cl_mgr.get_filename().c_str());
     ImGui::Spacing();
-
+    ImGui::End();
     //if (gui.show_frame_camera)
     //{
     //    scene.frame_camera.uniform.transform.translation = -scene.camera.translation;
@@ -136,4 +136,7 @@ void gui_start_basic_structure(gui_structure& gui, cl_manager& cl_mgr)
     //}
     //if (gui.show_frame_worldspace)
     //    draw(scene.frame_worldspace, scene.camera);
+    ImGui::Begin("Camera", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("Aperture Radius: "); ImGui::SameLine();  ImGui::Text(std::to_string(interactiveCamera->getApertureRadius()).c_str());
+    ImGui::Text("Focal Distance: "); ImGui::SameLine();  ImGui::Text(std::to_string(interactiveCamera->getFocalDistance()).c_str());
 }

@@ -81,6 +81,10 @@ public:
 
 	void buildRenderCamera(Camera* renderCamera);
 
+	float getApertureRadius();
+	float getFocalDistance();
+
+
 	vcl::vec2 resolution;
 	vcl::vec2 fov;
 };

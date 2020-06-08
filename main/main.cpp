@@ -465,7 +465,7 @@ int main()
         // glBindTexture(GL_TEXTURE_2D,scene.texture_white);
 
         // Create the basic gui structure with ImGui
-        gui_start_basic_structure(gui, cl_mgr);
+        gui_start_basic_structure(gui, cl_mgr, interactiveCamera);
 
         // Perform computation and draw calls for each iteration loop
         // scene_current.frame_draw(shaders, scene, gui); opengl_debug();

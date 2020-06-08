@@ -108,6 +108,16 @@ void InteractiveCamera::buildRenderCamera(Camera* renderCamera) {
 	renderCamera->focalDistance = focalDistance;
 }
 
+float InteractiveCamera::getApertureRadius()
+{
+	return apertureRadius;
+}
+
+float InteractiveCamera::getFocalDistance()
+{
+	return focalDistance;
+}
+
 float mod(float x, float y) { // Does this account for -y ???
 	return x - y * floorf(x / y);
 }
