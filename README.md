@@ -12,12 +12,15 @@ by Shikang DU and Mingyu ZHANG
 
 ## Compilation
 
-The compilation can be done using  `CMAKE`.
+The compilation can be done using  `CMAKE`. Tested in Windows 10 with VS2019.
 
 
 The library has one external dependency: 
 - [GLFW](https://www.glfw.org/) which can be installed through standard packages in Linux/MacOS (see the provided detailed tutorials).
-- OpenCL, above v1.2, which is provided by CUDA or AMD equivalant.
+- OpenCL, above v1.2, which is provided by CUDA or AMD equivalant. 
+  - **WARNING**: Intel is not supported. (specially for Linux)
+  - If `cl.hpp` is not provided by your OpenCL SDK, please download it from [Khronos website](https://www.khronos.org/registry/OpenCL/api/2.1/cl.hpp).
+  - If `FindOpenCL.cmake` does not work, please set `OpenCL_INCLUDE_DIRS` and `OpenCL_LIBRARY` manually, as showed in `CMakeList.txt`
 
 Instructions could be found here:
 * [Command lines to compile in Linux/MacOS](doc/compilation.md#command_line)
@@ -28,8 +31,8 @@ Instructions could be found here:
 
 ## Run
 - Put the kerenl files in the right directory
-  - CL kernel: `../../../cl_kernels/simple_fbo.cl` of the working dir.
-  - HDR image: `../../../data/Mans_Outside_2k.hdr`.
+  - CL kernel: `../../../cl_kernels/simple_fbo.cl` from the working dir.
+  - HDR image: `../../../data/Mans_Outside_2k.hdr` from the working dir.
 - Execute program
 - Indicate OpenCL platform and device
 - Try the program, control your camara with keyboard 
