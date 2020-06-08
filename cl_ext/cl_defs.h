@@ -18,7 +18,7 @@
 #else
 #if defined (__linux)
 #include <GL/glx.h>
-#elif defined( __WIN32 )
+#elif defined _WIN32 
 #include <windows.h>
 #endif // (__linux)
 
