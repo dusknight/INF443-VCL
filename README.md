@@ -3,6 +3,8 @@ An OpenCL based Real-time Path Tracer
 
 by Shikang DU and Mingyu ZHANG
 
+![demo](image_2020-06-08_19-19-42.png)
+
 ## Features
 
 - Real-time ray tracing
